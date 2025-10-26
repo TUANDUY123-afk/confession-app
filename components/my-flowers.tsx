@@ -181,7 +181,7 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
                             if (currentWater >= 10) {
                               onWaterFlower(flowerId, 10)
                             } else {
-                              alert(`Không đủ nước để tưới! Còn ${currentWater} nước`)
+                              console.log(`Không đủ nước để tưới! Còn ${currentWater} nước`)
                             }
                           }}
                           disabled={currentWater < 10}

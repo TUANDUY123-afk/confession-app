@@ -48,10 +48,9 @@ export default function GamificationPage() {
       // Refresh data from server
       setRefreshKey(prev => prev + 1)
       
-      alert(`✅ Đã nhận ${coins} xu! 🎉`)
+      console.log(`✅ Đã nhận ${coins} xu! 🎉`)
     } catch (err) {
       console.error("Error claiming reward:", err)
-      alert(`Lỗi khi nhận thưởng 😢`)
     }
   }
 
@@ -160,23 +159,22 @@ export default function GamificationPage() {
       
       // Refresh all components
       setRefreshKey(prev => prev + 1)
-      alert(`✅ Đã tưới ${waterAmount} nước cho hoa! 💧`)
+      console.log(`✅ Đã tưới ${waterAmount} nước cho hoa! 💧`)
     } catch (err) {
       console.error("Error watering flower:", err)
-      alert(`Lỗi khi tưới hoa 😢`)
     }
   }
 
-  const handleAddTestPoints = async (points: number) => {
+  const handleAddTestWater = async (water: number) => {
     try {
-      console.log("Adding points:", points)
+      console.log("Adding water:", water)
       const response = await fetch("/api/gamification/points", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           activity_type: "test",
-          points: points,
-          description: `Test: Thêm ${points} điểm`,
+          points: water,
+          description: `Test: Thêm ${water} nước`,
         }),
       })
       
@@ -184,20 +182,19 @@ export default function GamificationPage() {
       console.log("Response:", data)
       
       if (!response.ok) {
-        throw new Error(data.error || "Failed to add points")
+        throw new Error(data.error || "Failed to add water")
       }
       
       // Refresh all components
       setRefreshKey(prev => prev + 1)
-      alert(`✅ Đã thêm ${points} điểm!`)
+      console.log(`✅ Đã thêm ${water} nước!`)
     } catch (err) {
-      console.error("Error adding points:", err)
-      alert(`Lỗi khi thêm điểm 😢: ${err}`)
+      console.error("Error adding water:", err)
     }
   }
 
   const handleResetPoints = async () => {
-    if (!confirm("⚠️ Bạn có chắc muốn reset TẤT CẢ về 0?\n\nĐiểm, streak, xu, và tất cả hoa đã mua sẽ bị xóa!")) {
+    if (!confirm("⚠️ Bạn có chắc muốn reset TẤT CẢ về 0?\n\nNước, streak, xu, và tất cả hoa đã mua sẽ bị xóa!")) {
       return
     }
 
@@ -210,7 +207,7 @@ export default function GamificationPage() {
       const data = await response.json()
       
       if (!response.ok) {
-        throw new Error(data.error || "Failed to reset points")
+        throw new Error(data.error || "Failed to reset")
       }
       
       // Reset all local state
@@ -224,10 +221,9 @@ export default function GamificationPage() {
       
       // Refresh all components
       setRefreshKey(prev => prev + 1)
-      alert("✅ Đã reset tất cả về 0!\n\n✨ Sẵn sàng bắt đầu lại!")
+      console.log("✅ Đã reset tất cả về 0!")
     } catch (err) {
-      console.error("Error resetting points:", err)
-      alert(`Lỗi khi reset 😢: ${err}`)
+      console.error("Error resetting:", err)
     }
   }
 
@@ -268,10 +264,9 @@ export default function GamificationPage() {
       const message = useCoins && price > 0 
         ? `✅ Đã mua hoa thành công bằng ${price} xu! 🌸`
         : `✅ Đã nhận hoa miễn phí! 🌸`
-      alert(message)
+      console.log(message)
     } catch (err) {
       console.error("Error buying flower:", err)
-      alert(`Lỗi khi mua hoa 😢`)
     }
   }
 
@@ -316,28 +311,28 @@ export default function GamificationPage() {
           {/* Test Buttons */}
           <div className="flex gap-2 justify-center flex-wrap">
             <button
-              onClick={() => handleAddTestPoints(10)}
-              className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition font-semibold"
+              onClick={() => handleAddTestWater(10)}
+              className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600 transition font-semibold flex items-center gap-1"
             >
-              +10 Điểm
+              💧 +10
             </button>
             <button
-              onClick={() => handleAddTestPoints(50)}
-              className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600 transition font-semibold"
+              onClick={() => handleAddTestWater(50)}
+              className="bg-cyan-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-cyan-600 transition font-semibold flex items-center gap-1"
             >
-              +50 Điểm
+              💧 +50
             </button>
             <button
-              onClick={() => handleAddTestPoints(100)}
-              className="bg-purple-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-purple-600 transition font-semibold"
+              onClick={() => handleAddTestWater(100)}
+              className="bg-teal-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-teal-600 transition font-semibold flex items-center gap-1"
             >
-              +100 Điểm
+              💧 +100
             </button>
             <button
-              onClick={() => handleAddTestPoints(1000)}
-              className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-3 py-1.5 rounded-lg text-sm hover:from-pink-600 hover:to-rose-600 transition font-bold"
+              onClick={() => handleAddTestWater(1000)}
+              className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-3 py-1.5 rounded-lg text-sm hover:from-blue-600 hover:to-cyan-600 transition font-bold flex items-center gap-1"
             >
-              +1000 Điểm
+              💧 +1000
             </button>
             <button
               onClick={handleResetPoints}
@@ -346,7 +341,7 @@ export default function GamificationPage() {
               🔄 Reset
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-2">🧪 Test buttons</p>
+          <p className="text-xs text-gray-500 mt-2">🧪 Test buttons - Thêm nước</p>
         </div>
 
                  {/* Love Points */}
