@@ -55,6 +55,32 @@ export default function GamificationPage() {
     }
   }
 
+  const handleResetPoints = async () => {
+    if (!confirm("⚠️ Bạn có chắc muốn reset tất cả điểm về 0?\n\nĐiểm và streak sẽ bị xóa!")) {
+      return
+    }
+
+    try {
+      const response = await fetch("/api/gamification/points/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to reset points")
+      }
+      
+      // Refresh all components
+      setRefreshKey(prev => prev + 1)
+      alert("✅ Đã reset điểm về 0!")
+    } catch (err) {
+      console.error("Error resetting points:", err)
+      alert(`Lỗi khi reset điểm 😢: ${err}`)
+    }
+  }
+
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-blue-50 py-12 overflow-hidden">
       {/* 💞 Hiệu ứng tim bay */}
@@ -93,6 +119,18 @@ export default function GamificationPage() {
               className="bg-purple-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-purple-600 transition font-semibold"
             >
               +100 Điểm
+            </button>
+            <button
+              onClick={() => handleAddTestPoints(1000)}
+              className="bg-gradient-to-r from-pink-500 to-rose-500 text-white px-3 py-1.5 rounded-lg text-sm hover:from-pink-600 hover:to-rose-600 transition font-bold"
+            >
+              +1000 Điểm
+            </button>
+            <button
+              onClick={handleResetPoints}
+              className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition font-semibold"
+            >
+              🔄 Reset
             </button>
           </div>
           <p className="text-xs text-gray-500 mt-2">🧪 Test buttons</p>
