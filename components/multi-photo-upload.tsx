@@ -104,52 +104,27 @@ export default function MultiPhotoUpload({
       setError("")
 
       for (const photo of selectedPhotos) {
-        console.log("[Upload] Starting upload:", photo.file.name, photo.file.size, "type:", photo.file.type)
+        console.log("[Upload] Starting upload via API route:", photo.file.name, photo.file.size, "type:", photo.file.type)
         
-        // Upload directly to Supabase using client-side (bypass Vercel 4.5MB limit)
-        const supabaseUrl = "https://tbfvxykfxzvmjqinmpiw.supabase.co"
-        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiZnZ4eWtmeHp2bWpxaW5tcGl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0NjcxMjUsImV4cCI6MjA3NzA0MzEyNX0.EcbImB8wGrt8Zb_YfiNNWagXldX1Mb8MTMTLCU9SUIs"
+        // ✅ Upload through API route (like v12) - uses service role key
+        const formData = new FormData()
+        formData.append("file", photo.file)
+        formData.append("title", photo.title)
         
-        if (!supabaseUrl || !supabaseKey) {
-          throw new Error("Missing Supabase credentials")
-        }
-        
-        const supabase = createClient(supabaseUrl, supabaseKey)
-        const timestamp = Date.now()
-        const filename = `photos/${timestamp}-${photo.file.name}`
-        
-        console.log("[Upload] Uploading to Supabase:", filename, photo.file.size)
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("photos")
-          .upload(filename, photo.file, {
-            contentType: photo.file.type,
-            upsert: false,
-          })
-
-        if (uploadError) {
-          console.error("[Upload] Supabase error:", uploadError)
-          throw new Error(`Upload failed: ${uploadError.message}`)
-        }
-
-        // Get public URL
-        const { data: publicUrlData } = supabase.storage.from("photos").getPublicUrl(uploadData.path)
-        const uploadedUrl = publicUrlData.publicUrl
-        console.log("[Upload] Success:", uploadedUrl)
-        
-        // Save to database
-        const { error: dbError } = await supabase.from("photos").insert({
-          url: uploadedUrl,
-          title: photo.title,
-          filename: photo.file.name,
-          uploaded_at: new Date().toISOString(),
+        const response = await fetch("/api/upload-photo", {
+          method: "POST",
+          body: formData,
         })
 
-        if (dbError) {
-          console.error("[Upload] Database error:", dbError)
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: "Unknown error" }))
+          throw new Error(errorData.error || "Upload failed")
         }
 
-        onPhotoUploaded?.(uploadedUrl, photo.title)
+        const { url: uploadedUrl, title: uploadedTitle } = await response.json()
+        console.log("[Upload] Success:", uploadedUrl)
+        
+        onPhotoUploaded?.(uploadedUrl, uploadedTitle)
       }
 
       // ✅ Gửi thông báo sau khi tải ảnh thành công (chỉ 1 lần cho toàn bộ upload)
