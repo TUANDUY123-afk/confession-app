@@ -162,7 +162,7 @@ export default function GamificationPage() {
   }
 
   const handleResetPoints = async () => {
-    if (!confirm("⚠️ Bạn có chắc muốn reset tất cả điểm về 0?\n\nĐiểm và streak sẽ bị xóa!")) {
+    if (!confirm("⚠️ Bạn có chắc muốn reset TẤT CẢ về 0?\n\nĐiểm, streak, xu, và tất cả hoa đã mua sẽ bị xóa!")) {
       return
     }
 
@@ -178,12 +178,21 @@ export default function GamificationPage() {
         throw new Error(data.error || "Failed to reset points")
       }
       
+      // Reset all local state
+      setOwnedFlowers([])
+      setCurrentFlower(undefined)
+      setSelectedFlowerDetail(null)
+      setClaimedStages([])
+      setShowClaimPopup(false)
+      setShowFlowerDetail(false)
+      setShowShop(false)
+      
       // Refresh all components
       setRefreshKey(prev => prev + 1)
-      alert("✅ Đã reset điểm về 0!")
+      alert("✅ Đã reset tất cả về 0!\n\n✨ Sẵn sàng bắt đầu lại!")
     } catch (err) {
       console.error("Error resetting points:", err)
-      alert(`Lỗi khi reset điểm 😢: ${err}`)
+      alert(`Lỗi khi reset 😢: ${err}`)
     }
   }
 
