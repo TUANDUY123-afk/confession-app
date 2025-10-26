@@ -22,6 +22,7 @@ export default function GamificationPage() {
   const [selectedFlowerDetail, setSelectedFlowerDetail] = useState<string | null>(null)
   const [claimedStages, setClaimedStages] = useState<string[]>([])
   const [showClaimPopup, setShowClaimPopup] = useState(false)
+  const [flowerWaterMap, setFlowerWaterMap] = useState<{ [key: string]: number }>({})
 
   const handleClaimReward = async (coins: number, stageIndex: number, flowerId?: string) => {
     try {
@@ -135,6 +136,17 @@ export default function GamificationPage() {
       setTotalCoins(data.coins || 0)
       setOwnedFlowers(data.owned_flowers || [])
       setClaimedStages(data.claimed_stages || [])
+      
+      // Fetch flower water data
+      if (data.owned_flowers && data.owned_flowers.length > 0) {
+        const flowerRes = await fetch("/api/gamification/flower-points")
+        const flowerData = await flowerRes.json()
+        const waterMap: { [key: string]: number } = {}
+        flowerData.forEach((item: any) => {
+          waterMap[item.flower_id] = item.points || 0
+        })
+        setFlowerWaterMap(waterMap)
+      }
     } catch (err) {
       console.error("Error fetching points:", err)
     }
@@ -463,9 +475,10 @@ export default function GamificationPage() {
                       totalPoints={totalPoints}
                       flowerPrice={getFlowerPrice(selectedFlowerDetail)}
                       currentStage={0}
-                      onClaimReward={(coins) => handleClaimReward(coins, getCurrentStage(totalPoints), selectedFlowerDetail || undefined)}
+                      onClaimReward={(coins) => handleClaimReward(coins, getCurrentStage(flowerWaterMap[selectedFlowerDetail] || 0), selectedFlowerDetail || undefined)}
                       claimedStages={claimedStages}
                       flowerId={selectedFlowerDetail}
+                      flowerWater={flowerWaterMap[selectedFlowerDetail]}
                     />
                 </div>
               </div>

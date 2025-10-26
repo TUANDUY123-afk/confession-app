@@ -247,14 +247,92 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
               onClick={() => onSelectFlower(flowerId)}
               className="bg-white rounded-xl p-4 border-2 border-green-300 hover:border-green-400 cursor-pointer transition-all hover:shadow-lg"
             >
-              <div className="flex items-start gap-4">
-                {/* Flower Display */}
-                <div className="text-5xl relative">
-                  {stage.emoji}
-                  {stage.sparkles && (
-                    <div className="absolute -top-2 -right-2 text-lg animate-pulse">
-                      {stage.sparkles}
+              <div className="flex items-end gap-4">
+                {/* Flower Display with Pot */}
+                <div className="relative flex flex-col items-center">
+                  {/* Pot */}
+                  <motion.div
+                    animate={{ 
+                      scale: hasPendingSync ? [1, 1.05, 1] : 1 
+                    }}
+                    transition={{ duration: 0.3 }}
+                    className="relative"
+                  >
+                    <div className="w-20 h-20 mb-1 relative">
+                      {/* Pot Shadow */}
+                      <div className="absolute inset-0 bg-gradient-to-t from-amber-900 to-amber-700 rounded-b-lg rounded-t-[3px] transform translate-y-[2px] blur-sm opacity-30"></div>
+                      
+                      {/* Pot Body */}
+                      <div className="absolute inset-0 bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 rounded-b-lg rounded-t-[3px] border-2 border-amber-700 shadow-inner">
+                        <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-amber-300 rounded-full opacity-50"></div>
+                      </div>
+                      
+                      {/* Pot Rim */}
+                      <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-20 h-3 bg-gradient-to-b from-amber-300 to-amber-500 rounded-full border-2 border-amber-600 shadow-md"></div>
                     </div>
+                    
+                    {/* Soil inside pot */}
+                    <div className="absolute bottom-[22px] left-1/2 transform -translate-x-1/2 w-[72px] h-4 bg-gradient-to-b from-amber-800 to-amber-900 rounded-full opacity-80"></div>
+                  </motion.div>
+
+                  {/* Flower Above Pot */}
+                  <motion.div
+                    animate={{ 
+                      y: [0, -8, 0],
+                      rotate: [0, 2, -2, 0],
+                      scale: hasPendingSync ? [1, 1.1, 1] : 1
+                    }}
+                    transition={{ 
+                      y: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+                      rotate: { duration: 3, repeat: Infinity, ease: "easeInOut" },
+                      scale: { duration: 0.3 }
+                    }}
+                    className="text-6xl relative -mt-2"
+                  >
+                    {stage.emoji}
+                    
+                    {/* Sparkles around flower */}
+                    {stage.sparkles && (
+                      <motion.div
+                        initial={{ opacity: 0, scale: 0 }}
+                        animate={{ 
+                          opacity: [0, 1, 0],
+                          scale: [0, 1.2, 0],
+                          rotate: [0, 180, 360]
+                        }}
+                        transition={{ 
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                        className="absolute -top-4 -left-4 text-xl"
+                      >
+                        {stage.sparkles}
+                      </motion.div>
+                    )}
+                    
+                    {/* Growing effect */}
+                    {flowerWater > 0 && (
+                      <motion.div
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: [0, 1.5, 1], opacity: [0, 1, 0] }}
+                        transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
+                        className="absolute inset-0 rounded-full bg-gradient-to-r from-green-400/20 to-blue-400/20 blur-xl"
+                      />
+                    )}
+                  </motion.div>
+
+                  {/* Watering effect */}
+                  {hasPendingSync && (
+                    <motion.div
+                      initial={{ y: -10, opacity: 0 }}
+                      animate={{ y: -30, opacity: [0, 1, 0] }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.8 }}
+                      className="absolute -top-2 text-blue-400 text-2xl"
+                    >
+                      💧
+                    </motion.div>
                   )}
                 </div>
 

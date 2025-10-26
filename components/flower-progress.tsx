@@ -10,6 +10,7 @@ interface FlowerProgressProps {
   onClaimReward?: (coins: number) => void
   claimedStages?: string[]
   flowerId?: string
+  flowerWater?: number // Add flower specific water points
 }
 
 const getDifficulty = (price: number) => {
@@ -30,10 +31,13 @@ const getDifficulty = (price: number) => {
   }
 }
 
-export default function FlowerProgress({ totalPoints, flowerPrice, currentStage, onClaimReward, claimedStages = [], flowerId }: FlowerProgressProps) {
+export default function FlowerProgress({ totalPoints, flowerPrice, currentStage, onClaimReward, claimedStages = [], flowerId, flowerWater }: FlowerProgressProps) {
   const difficulty = getDifficulty(flowerPrice)
   const thresholds = difficulty.thresholds
   const rewards = difficulty.rewards
+
+  // Use flowerWater if provided, otherwise use totalPoints
+  const actualPoints = flowerWater !== undefined ? flowerWater : totalPoints
 
   // Find current stage and next threshold
   let currentThreshold = 0
@@ -42,19 +46,19 @@ export default function FlowerProgress({ totalPoints, flowerPrice, currentStage,
   let reward = 0
   let stageIndex = 0
 
-  if (totalPoints >= thresholds[3]) {
+  if (actualPoints >= thresholds[3]) {
     currentThreshold = thresholds[3]
     nextThreshold = 0 // Max level
     stageName = "Nở Rộ"
     reward = rewards[2]
     stageIndex = 3
-  } else if (totalPoints >= thresholds[2]) {
+  } else if (actualPoints >= thresholds[2]) {
     currentThreshold = thresholds[2]
     nextThreshold = thresholds[3]
     stageName = "Chớm Nở"
     reward = rewards[1]
     stageIndex = 2
-  } else if (totalPoints >= thresholds[1]) {
+  } else if (actualPoints >= thresholds[1]) {
     currentThreshold = thresholds[1]
     nextThreshold = thresholds[2]
     stageName = "Phát Triển"
@@ -63,20 +67,20 @@ export default function FlowerProgress({ totalPoints, flowerPrice, currentStage,
   }
 
   const progress = nextThreshold > 0 
-    ? ((totalPoints - currentThreshold) / (nextThreshold - currentThreshold)) * 100 
+    ? ((actualPoints - currentThreshold) / (nextThreshold - currentThreshold)) * 100 
     : 100
 
-  const pointsNeeded = nextThreshold > 0 ? nextThreshold - totalPoints : 0
+  const pointsNeeded = nextThreshold > 0 ? nextThreshold - actualPoints : 0
 
   // Create unique claim ID
   const claimId = flowerId ? `${flowerId}_${stageIndex}` : stageIndex.toString()
   
   // Check if can claim reward (reached threshold for current stage and not claimed yet)
   // Show button when user has enough points to reach the current stage
-  const canClaimReward = totalPoints >= currentThreshold && !claimedStages.includes(claimId) && currentThreshold > 0 && stageIndex > 0
+  const canClaimReward = actualPoints >= currentThreshold && !claimedStages.includes(claimId) && currentThreshold > 0 && stageIndex > 0
   
   console.log("FlowerProgress Debug:", {
-    totalPoints,
+    actualPoints,
     currentThreshold,
     stageIndex,
     claimId,
