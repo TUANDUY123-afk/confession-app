@@ -86,6 +86,14 @@ export default function Home() {
         >
           📔 Nhật ký chung
         </Link>
+        <Link
+          href="/gamification"
+          className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full 
+          shadow hover:from-yellow-500 hover:to-orange-600 active:scale-95 transition-all duration-200 
+          text-sm sm:text-base font-bold"
+        >
+          🎮 Gamification
+        </Link>
       </div>
 
       {/* 🌺 Hiệu ứng fade nhẹ ở dưới (cho cảm giác chiều sâu) */}
