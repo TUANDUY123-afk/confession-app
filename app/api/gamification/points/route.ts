@@ -25,6 +25,7 @@ export async function GET() {
         current_streak: 0,
         longest_streak: 0,
         last_activity_date: null,
+        coins: 0,
       })
     }
     

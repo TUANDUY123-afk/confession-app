@@ -9,6 +9,7 @@ import AchievementsDisplay from "@/components/achievements-display"
 import FloatingHearts from "@/components/floating-hearts"
 import FlowerShop from "@/components/flower-shop"
 import MyFlowers from "@/components/my-flowers"
+import FlowerProgress from "@/components/flower-progress"
 
 export default function GamificationPage() {
   const [totalPoints, setTotalPoints] = useState(0)
@@ -183,6 +184,17 @@ export default function GamificationPage() {
             onSelectFlower={handleSelectFlower}
           />
         </div>
+
+        {/* Flower Progress & Coins */}
+        {ownedFlowers.length > 0 && (
+          <div className="mb-6">
+            <FlowerProgress 
+              totalPoints={totalPoints}
+              flowerPrice={currentFlower === "cherry" ? 200 : currentFlower === "sunflower" ? 150 : 100}
+              currentStage={0}
+            />
+          </div>
+        )}
 
         {/* Open Shop Button */}
         <div className="mb-6">
