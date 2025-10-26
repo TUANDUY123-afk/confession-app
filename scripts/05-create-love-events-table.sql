@@ -19,3 +19,4 @@ CREATE INDEX IF NOT EXISTS idx_love_events_type ON love_events(type);
 -- Add comment
 COMMENT ON TABLE love_events IS 'Stores love story events/milestones for couples';
 
+

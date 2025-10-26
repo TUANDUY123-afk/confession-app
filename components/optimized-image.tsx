@@ -47,3 +47,4 @@ function OptimizedImage({ src, alt, className, priority }: OptimizedImageProps) 
 
 export default memo(OptimizedImage)
 
+

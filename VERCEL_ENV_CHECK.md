@@ -47,3 +47,4 @@ Lặp lại cho 2 variables còn lại!
 2. Upload ảnh lại trên Vercel URL
 3. Kiểm tra console logs trong browser DevTools
 
+
