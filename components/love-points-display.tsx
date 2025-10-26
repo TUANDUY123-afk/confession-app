@@ -9,6 +9,7 @@ export default function LovePointsDisplay() {
     total_points: 0,
     current_streak: 0,
     longest_streak: 0,
+    coins: 0,
   })
   const [loading, setLoading] = useState(true)
 
@@ -48,35 +49,51 @@ export default function LovePointsDisplay() {
         <h3 className="text-lg font-bold text-pink-600">💕 Love Points</h3>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-3">
         {/* Total Points */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-pink-100">
-          <div className="text-sm text-gray-600 mb-2">Tổng điểm</div>
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-pink-100">
+          <div className="text-xs text-gray-600 mb-1">Tổng điểm</div>
           <motion.div
             key={pointsData.total_points}
             initial={{ scale: 1.2 }}
             animate={{ scale: 1 }}
-            className="text-3xl font-bold text-pink-600"
+            className="text-2xl font-bold text-pink-600"
           >
             {pointsData.total_points}
           </motion.div>
         </div>
 
         {/* Current Streak */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-pink-100">
-          <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
-            <Flame className="w-4 h-4 text-orange-500" />
+        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-pink-100">
+          <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
+            <Flame className="w-3 h-3 text-orange-500" />
             Streak
           </div>
           <motion.div
             key={pointsData.current_streak}
             initial={{ scale: 1.2 }}
             animate={{ scale: 1 }}
-            className="text-3xl font-bold text-orange-500"
+            className="text-2xl font-bold text-orange-500"
           >
             {pointsData.current_streak}
           </motion.div>
           <div className="text-xs text-gray-500">Kỷ lục: {pointsData.longest_streak}</div>
+        </div>
+
+        {/* Coins */}
+        <div className="bg-gradient-to-br from-yellow-100 to-orange-100 rounded-xl p-3 border border-yellow-300">
+          <div className="flex items-center gap-1 text-xs text-gray-700 mb-1">
+            <span>🪙</span>
+            <span className="font-semibold">Xu</span>
+          </div>
+          <motion.div
+            key={pointsData.coins}
+            initial={{ scale: 1.2 }}
+            animate={{ scale: 1 }}
+            className="text-2xl font-bold text-yellow-600"
+          >
+            {pointsData.coins || 0}
+          </motion.div>
         </div>
       </div>
 

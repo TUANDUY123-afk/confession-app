@@ -17,6 +17,8 @@ export default function GamificationPage() {
   const [ownedFlowers, setOwnedFlowers] = useState<string[]>([])
   const [currentFlower, setCurrentFlower] = useState<string | undefined>()
   const [showShop, setShowShop] = useState(false)
+  const [showFlowerDetail, setShowFlowerDetail] = useState(false)
+  const [selectedFlowerDetail, setSelectedFlowerDetail] = useState<string | null>(null)
 
   useEffect(() => {
     fetchPoints()
@@ -114,6 +116,21 @@ export default function GamificationPage() {
 
   const handleSelectFlower = (flowerId: string) => {
     setCurrentFlower(flowerId)
+    setSelectedFlowerDetail(flowerId)
+    setShowFlowerDetail(true)
+  }
+
+  const getFlowerPrice = (flowerId: string | null) => {
+    if (!flowerId) return 100
+    const prices: { [key: string]: number } = {
+      rose: 100,
+      tulip: 120,
+      sunflower: 150,
+      jasmine: 160,
+      lavender: 180,
+      cherry: 200,
+    }
+    return prices[flowerId] || 100
   }
 
   return (
@@ -235,6 +252,48 @@ export default function GamificationPage() {
                   ownedFlowers={ownedFlowers}
                   onBuyFlower={handleBuyFlower}
                 />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Flower Detail Popup */}
+        {showFlowerDetail && selectedFlowerDetail && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowFlowerDetail(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-green-600 flex items-center gap-2">
+                    🌸 Vườn Tình Yêu
+                  </h2>
+                  <button
+                    onClick={() => setShowFlowerDetail(false)}
+                    className="text-gray-500 hover:text-gray-700 transition text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                
+                <div className="space-y-6">
+                  {/* Love Tree */}
+                  <LoveTree 
+                    totalPoints={totalPoints} 
+                    currentFlower={selectedFlowerDetail} 
+                  />
+                  
+                  {/* Flower Progress */}
+                  <FlowerProgress 
+                    totalPoints={totalPoints}
+                    flowerPrice={getFlowerPrice(selectedFlowerDetail)}
+                    currentStage={0}
+                  />
+                </div>
               </div>
             </div>
           </div>
