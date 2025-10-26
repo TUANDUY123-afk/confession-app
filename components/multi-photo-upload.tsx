@@ -98,10 +98,10 @@ export default function MultiPhotoUpload({
         onPhotoUploaded?.(data.url, data.title)
       }
 
-      // ✅ Gửi thông báo sau khi tải ảnh thành công
+      // ✅ Gửi thông báo sau khi tải ảnh thành công (chỉ 1 lần cho toàn bộ upload)
       await addNotification({
         type: "photo",
-        message: `${currentUser.name} đã đăng một bức ảnh mới 📸`,
+        message: `${currentUser.name} đã đăng ${selectedPhotos.length > 1 ? selectedPhotos.length + ' bức ảnh mới' : 'một bức ảnh mới'} 📸`,
         author: currentUser.name,
         target: "Tất cả",
         link: "/photo-wall"
