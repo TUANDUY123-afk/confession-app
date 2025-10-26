@@ -38,28 +38,63 @@ export default function MultiPhotoUpload({
     fileInputRef.current?.click()
   }, [])
 
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
 
     const newPhotos: SelectedPhoto[] = []
-    files.forEach((file) => {
+    
+    for (const file of files) {
       if (file.type.startsWith("image/")) {
-        const reader = new FileReader()
-        reader.onload = (event) => {
-          newPhotos.push({
-            file,
-            preview: event.target?.result as string,
-            title: file.name.replace(/\.[^/.]+$/, ""),
-          })
-          if (newPhotos.length === files.length) {
-            setSelectedPhotos(newPhotos)
-            setShowPreview(true)
+        try {
+          // Convert HEIC/HEIF to JPEG if needed
+          let processedFile = file
+          let preview = ""
+          
+          if (file.type === "image/heic" || file.type === "image/heif" || file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif")) {
+            // Try to convert HEIC to JPEG using browser Image APIs
+            try {
+              const imageBitmap = await createImageBitmap(file)
+              const canvas = document.createElement("canvas")
+              canvas.width = imageBitmap.width
+              canvas.height = imageBitmap.height
+              const ctx = canvas.getContext("2d")
+              if (ctx) {
+                ctx.drawImage(imageBitmap, 0, 0)
+                
+                // Convert to blob and create new file
+                const blob = await new Promise<Blob>((resolve) => {
+                  canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.9)
+                })
+                processedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" })
+              }
+            } catch (heicError) {
+              console.warn("HEIC conversion failed, using original:", heicError)
+            }
           }
+          
+          // Create preview
+          const reader = new FileReader()
+          const processedFileRef = processedFile // Copy for closure
+          reader.onload = (event) => {
+            preview = event.target?.result as string
+            newPhotos.push({
+              file: processedFileRef,
+              preview,
+              title: processedFileRef.name.replace(/\.[^/.]+$/, ""),
+            })
+            
+            if (newPhotos.length === files.length) {
+              setSelectedPhotos(newPhotos)
+              setShowPreview(true)
+            }
+          }
+          reader.readAsDataURL(processedFile)
+        } catch (err) {
+          console.error("Error processing file:", file.name, err)
         }
-        reader.readAsDataURL(file)
       }
-    })
+    }
 
     e.target.value = ""
   }
