@@ -81,17 +81,26 @@ export async function DELETE(request: NextRequest) {
     const supabase = getSupabaseClient()
     const { id } = await request.json()
 
+    console.log("[Delete Event] Attempting to delete event ID:", id)
+
     // Delete event from love_events table
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("love_events")
       .delete()
       .eq("id", id)
+      .select()
 
-    if (error) throw error
+    console.log("[Delete Event] Response:", { data, error })
 
+    if (error) {
+      console.error("[Delete Event] Supabase error:", error)
+      throw error
+    }
+
+    console.log("[Delete Event] Successfully deleted event:", id)
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error("Error deleting event:", error)
+    console.error("[Delete Event] Error:", error)
     return NextResponse.json(
       { error: "Failed to delete event", details: error.message },
       { status: 500 }

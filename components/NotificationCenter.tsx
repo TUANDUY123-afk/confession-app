@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useNotifications } from "@/contexts/NotificationContext"
-import { Heart, MessageCircle, ImageIcon, BookOpen, Trash2, Check } from "lucide-react"
+import { Heart, MessageCircle, ImageIcon, BookOpen, Trash2, Check, Calendar } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 export function NotificationCenter() {
@@ -47,6 +47,8 @@ export function NotificationCenter() {
         return <ImageIcon className="w-4 h-4 text-purple-500" />
       case "diary":
         return <BookOpen className="w-4 h-4 text-pink-500" />
+      case "event":
+        return <Calendar className="w-4 h-4 text-pink-600" />
       default:
         return null
     }

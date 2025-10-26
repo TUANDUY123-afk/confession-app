@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, memo } from "react"
 import { getSupabaseClient } from "@/lib/supabase-client"
+import { useNotifications } from "@/contexts/NotificationContext"
 import { Calendar, ChevronLeft, ChevronRight, Heart, Gift, Cake, Flame } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -33,6 +34,7 @@ interface DayData {
 }
 
 function LoveCalendar() {
+  const { addNotification } = useNotifications()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState<LoveEvent[]>([])
   const [selectedEvent, setSelectedEvent] = useState<LoveEvent | null>(null)
@@ -55,23 +57,15 @@ function LoveCalendar() {
   const daysInMonth = lastDay.getDate()
   const startingDayOfWeek = firstDay.getDay()
 
-  useEffect(() => {
-    loadEvents()
-  }, [currentDate])
-
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async () => {
     try {
-      // Load from calendar API
-      const calendarRes = await fetch("/api/calendar/load")
-      const { data: calendarEvents } = await calendarRes.json()
-      
-      // Load from love-events API
+      // Load events from love-events API only
       const eventsRes = await fetch("/api/love-events")
       const { data: loveEventsData } = await eventsRes.json()
       
       // Format love events to match calendar format
-      const formattedLoveEvents = (loveEventsData || []).map((e: any) => ({
-        id: `love-event-${e.id}`,
+      const formattedEvents = (loveEventsData || []).map((e: any) => ({
+        id: e.id, // Use original ID (don't add prefix)
         title: e.title,
         date: e.date,
         type: (e.type || "outing") as const,
@@ -79,19 +73,19 @@ function LoveCalendar() {
         description: e.description || null,
       }))
       
-      // Deduplicate events by id
-      const allEvents = [...(calendarEvents || []), ...formattedLoveEvents]
-      const uniqueEvents = Array.from(
-        new Map(allEvents.map((e) => [e.id, e])).values()
-      )
-      
-      setEvents(uniqueEvents)
+      setEvents(formattedEvents)
     } catch (err) {
       console.error("Error loading events:", err)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  // Load events when month/year changes (not on every render)
+  const monthKey = `${currentDate.getFullYear()}-${currentDate.getMonth()}`
+  useEffect(() => {
+    loadEvents()
+  }, [monthKey, loadEvents])
 
   const formatDateString = (date: Date): string => {
     const year = date.getFullYear()
@@ -107,6 +101,10 @@ function LoveCalendar() {
     const dateStr = formatDateString(date)
     
     return events.filter(event => {
+      // Only show events with type (love events), not milestones or memories
+      if (!event.type || event.type === "milestone" || event.type === "memory") {
+        return false
+      }
       // event.date is already in YYYY-MM-DD format from database
       return event.date === dateStr
     })
@@ -222,6 +220,16 @@ function LoveCalendar() {
         setNewEventDescription("")
         setNewEventImage(null)
         setIsAddDialogOpen(false)
+        
+        // Send notification to all users
+        const currentUser = localStorage.getItem("lovable_user") || "Đôi ta"
+        await addNotification({
+          type: "event",
+          message: `${currentUser} đã thêm sự kiện "${newEventTitle}" vào lịch 📅`,
+          author: currentUser,
+          target: "Tất cả",
+          link: "/love-story"
+        })
       }
     } catch (err) {
       console.error("Error adding event:", err)
@@ -614,16 +622,37 @@ function LoveCalendar() {
                           onClick={async () => {
                             if (confirm("Bạn có chắc muốn xóa sự kiện này?")) {
                               try {
-                                const eventId = event.id.replace("love-event-", "")
-                                await fetch("/api/love-events", {
+                                const eventId = event.id // No need to replace prefix anymore
+                                console.log("Deleting event with ID:", eventId)
+                                
+                                const response = await fetch("/api/love-events", {
                                   method: "DELETE",
                                   headers: { "Content-Type": "application/json" },
                                   body: JSON.stringify({ id: eventId }),
                                 })
-                              const updatedEvents = events.filter((e) => e.id !== event.id)
-                              setEvents(updatedEvents)
-                              const dayStr = formatDateString(selectedDay)
-                              setSelectedDayEvents(updatedEvents.filter(e => e.date === dayStr))
+                                
+                                const result = await response.json()
+                                console.log("Delete response:", response.status, result)
+                                
+                                if (!response.ok || result.error) {
+                                  throw new Error(result.error || "Delete failed")
+                                }
+                                
+                                // Update UI immediately
+                                const updatedEvents = events.filter((e) => e.id !== event.id)
+                                setEvents(updatedEvents)
+                                const dayStr = formatDateString(selectedDay)
+                                setSelectedDayEvents(updatedEvents.filter(e => e.date === dayStr))
+                                
+                                // Send notification to all users (in background)
+                                const currentUser = localStorage.getItem("lovable_user") || "Đôi ta"
+                                addNotification({
+                                  type: "event",
+                                  message: `${currentUser} đã xóa sự kiện "${event.title}" khỏi lịch 🗑️`,
+                                  author: currentUser,
+                                  target: "Tất cả",
+                                  link: "/love-story"
+                                }).catch(err => console.error("Notification error:", err))
                               } catch (err) {
                                 console.error("Error deleting event:", err)
                                 alert("Lỗi khi xóa sự kiện")
