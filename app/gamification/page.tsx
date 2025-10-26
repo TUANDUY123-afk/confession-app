@@ -10,11 +10,11 @@ import FloatingHearts from "@/components/floating-hearts"
 
 export default function GamificationPage() {
   const [totalPoints, setTotalPoints] = useState(0)
-  const [showTestButton, setShowTestButton] = useState(false)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     fetchPoints()
-  }, [])
+  }, [refreshKey])
 
   const fetchPoints = async () => {
     try {
@@ -28,7 +28,8 @@ export default function GamificationPage() {
 
   const handleAddTestPoints = async (points: number) => {
     try {
-      await fetch("/api/gamification/points", {
+      console.log("Adding points:", points)
+      const response = await fetch("/api/gamification/points", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -37,11 +38,20 @@ export default function GamificationPage() {
           description: `Test: Thêm ${points} điểm`,
         }),
       })
-      fetchPoints() // Refresh points display
+      
+      const data = await response.json()
+      console.log("Response:", data)
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to add points")
+      }
+      
+      // Refresh all components
+      setRefreshKey(prev => prev + 1)
       alert(`✅ Đã thêm ${points} điểm!`)
     } catch (err) {
       console.error("Error adding points:", err)
-      alert("Lỗi khi thêm điểm 😢")
+      alert(`Lỗi khi thêm điểm 😢: ${err}`)
     }
   }
 
@@ -89,17 +99,17 @@ export default function GamificationPage() {
         </div>
 
         {/* Love Points */}
-        <div className="mb-6">
+        <div className="mb-6" key={`points-${refreshKey}`}>
           <LovePointsDisplay />
         </div>
 
         {/* Love Tree */}
-        <div className="mb-6">
+        <div className="mb-6" key={`tree-${refreshKey}`}>
           <LoveTree totalPoints={totalPoints} />
         </div>
 
         {/* Achievements */}
-        <div className="mb-6">
+        <div className="mb-6" key={`achievements-${refreshKey}`}>
           <AchievementsDisplay />
         </div>
 
