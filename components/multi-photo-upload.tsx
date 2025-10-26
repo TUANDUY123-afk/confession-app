@@ -30,11 +30,21 @@ export default function MultiPhotoUpload({
   const [error, setError] = useState("")
   const [showPreview, setShowPreview] = useState(false)
   const [hasClicked, setHasClicked] = useState(false)
+  const [currentUserName, setCurrentUserName] = useState<string>("")
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // ✅ Lấy hàm thông báo & thông tin người dùng
   const { addNotification } = useNotifications()
-  const currentUser = getCurrentUser()
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const user = await getCurrentUser()
+      if (user?.name) {
+        setCurrentUserName(user.name)
+      }
+    }
+    fetchUser()
+  }, [])
 
   useEffect(() => {
     // Only click once on mount
@@ -178,10 +188,11 @@ export default function MultiPhotoUpload({
       }
 
       // ✅ Gửi thông báo sau khi tải ảnh thành công (chỉ 1 lần cho toàn bộ upload)
+      const userName = currentUserName || "Người yêu"
       await addNotification({
         type: "photo",
-        message: `${currentUser.name} đã đăng ${selectedPhotos.length > 1 ? selectedPhotos.length + ' bức ảnh mới' : 'một bức ảnh mới'} 📸`,
-        author: currentUser.name,
+        message: `${userName} đã đăng ${selectedPhotos.length > 1 ? selectedPhotos.length + ' bức ảnh mới' : 'một bức ảnh mới'} 📸`,
+        author: userName,
         target: "Tất cả",
         link: "/photo-wall"
       })
