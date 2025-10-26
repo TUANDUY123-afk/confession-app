@@ -6,6 +6,7 @@ import Link from "next/link"
 import LoveStoryHeader from "@/components/love-story-header"
 import MilestoneList from "@/components/milestone-list"
 import LoveCalendar from "@/components/love-calendar"
+import EventCountdown from "@/components/event-countdown"
 import FloatingHearts from "@/components/floating-hearts"
 import { useNotifications } from "@/contexts/NotificationContext"
 import { getCurrentUser } from "@/utils/user"
@@ -15,6 +16,7 @@ export default function LoveStoryPage() {
   const [partnerName, setPartnerName] = useState("")
   const [daysTogether, setDaysTogether] = useState(0)
   const [milestones, setMilestones] = useState<any[]>([])
+  const [events, setEvents] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [editingDate, setEditingDate] = useState(false)
 
@@ -46,8 +48,23 @@ export default function LoveStoryPage() {
     } else {
       setMilestones(milestonesDefault.map((m) => ({ ...m, completed: false })))
     }
+    
+    // Load events
+    fetchEvents()
+    
     setIsLoading(false)
   }, [])
+
+  // Load events from API
+  const fetchEvents = async () => {
+    try {
+      const res = await fetch("/api/love-events")
+      const { data } = await res.json()
+      setEvents(data || [])
+    } catch (error) {
+      console.error("Error fetching events:", error)
+    }
+  }
 
   // ✅ Tính số ngày yêu
   useEffect(() => {
@@ -137,6 +154,11 @@ export default function LoveStoryPage() {
             </button>
           </form>
         )}
+
+        {/* Event Countdown */}
+        <div className="mb-6">
+          <EventCountdown events={events} />
+        </div>
 
         {/* Love Calendar */}
         <div className="mb-6">

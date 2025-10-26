@@ -14,6 +14,17 @@ export default function VersionBadge({ version }: VersionBadgeProps) {
     {
       version: `${version} (Current)`,
       items: [
+        "Thêm component Event Countdown cho sự kiện sắp tới",
+        "Hiển thị đếm ngược với progress bar đẹp mắt",
+        "Tự động sắp xếp và lọc sự kiện gần nhất",
+        "Hiển thị số ngày còn lại và ngày diễn ra",
+        "Pin sự kiện quan trọng lên đầu",
+        "Animation mượt mà khi hiển thị"
+      ]
+    },
+    {
+      version: "v2",
+      items: [
         "Thêm nén ảnh cho Love Story",
         "Thêm hiệu ứng tim bay vào tất cả các trang",
         "Đổi cơ chế versioning từ 0.1.x sang v1, v2, v3",
