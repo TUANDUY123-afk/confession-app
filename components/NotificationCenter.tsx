@@ -22,20 +22,18 @@ export function NotificationCenter() {
   const handleNotificationClick = async (notif: any, e: React.MouseEvent) => {
     e.stopPropagation()
     
-    console.log("Notification clicked:", notif.id, "Link:", notif.link)
-    
-    // Mark as read immediately
-    await markAsRead(notif.id)
-    
-    // Navigate if link exists
+    // ✅ Optimize UX: Navigate immediately, mark as read in background
     if (notif.link) {
-      console.log("Navigating to:", notif.link)
-      setIsOpen(false) // Close panel first
-      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay
-      router.push(notif.link)
+      console.log("Navigating immediately to:", notif.link)
+      setIsOpen(false) // Close panel instantly
+      router.push(notif.link) // Navigate immediately (don't await)
+      
+      // Mark as read in background (don't block UI)
+      markAsRead(notif.id).catch(err => console.error("Failed to mark as read:", err))
     } else {
-      console.log("No link - notification marked as read only")
-      setIsOpen(false) // Close panel even without link
+      // No link - just mark as read
+      await markAsRead(notif.id)
+      setIsOpen(false)
     }
   }
 

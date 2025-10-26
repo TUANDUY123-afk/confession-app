@@ -30,6 +30,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [user, setUser] = useState<string | null>(null)
+  const [localReadStatus, setLocalReadStatus] = useState<Set<string>>(new Set())
 
   // 🩵 Lấy thông báo
   const fetchNotifications = useCallback(async (username: string) => {
@@ -61,11 +62,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }
       })
       
-      setNotifications(notificationsWithReadStatus)
+      // ✅ Preserve local read status during refetch
+      const merged = notificationsWithReadStatus.map(n => ({
+        ...n,
+        read: localReadStatus.has(n.id) || n.read
+      }))
+      
+      setNotifications(merged)
     } catch (err) {
       console.error("fetchNotifications error:", err)
     }
-  }, [])
+  }, [localReadStatus])
 
   // 🩵 Lấy user hiện tại & fetch lần đầu
   useEffect(() => {
@@ -113,17 +120,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   }, [])
 
-  // ✅ Đánh dấu 1 thông báo đã đọc
+  // ✅ Đánh dấu 1 thông báo đã đọc (Optimized for instant UX)
   const markAsRead = useCallback(async (id: string) => {
     try {
+      // ✅ Update local state FIRST (instant feedback)
+      setLocalReadStatus((prev) => new Set([...prev, id]))
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
+
       const currentUser = await getCurrentUser()
       const username = currentUser?.name || "Ẩn danh"
 
-      console.log("Marking as read:", id, "for user:", username)
-
-      // Update local state immediately for better UX
-      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
-
+      // ✅ Send to API in background (non-blocking)
       const response = await fetch(`/api/notifications/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -133,11 +140,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       if (!response.ok) {
         const errorText = await response.text()
         console.error("Failed to mark as read in API:", response.status, errorText)
-        // Revert local state if API fails
+        // Revert local state only if API fails
         setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)))
-      } else {
-        const result = await response.json()
-        console.log("Successfully marked as read:", result)
       }
     } catch (err) {
       console.error("markAsRead error:", err)
