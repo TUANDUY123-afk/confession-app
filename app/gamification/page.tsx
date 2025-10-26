@@ -7,10 +7,13 @@ import LovePointsDisplay from "@/components/love-points-display"
 import LoveTree from "@/components/love-tree"
 import AchievementsDisplay from "@/components/achievements-display"
 import FloatingHearts from "@/components/floating-hearts"
+import FlowerShop from "@/components/flower-shop"
 
 export default function GamificationPage() {
   const [totalPoints, setTotalPoints] = useState(0)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [ownedFlowers, setOwnedFlowers] = useState<string[]>([])
+  const [currentFlower, setCurrentFlower] = useState<string | undefined>()
 
   useEffect(() => {
     fetchPoints()
@@ -81,6 +84,30 @@ export default function GamificationPage() {
     }
   }
 
+  const handleBuyFlower = async (flowerId: string, price: number) => {
+    // Deduct points
+    try {
+      await fetch("/api/gamification/points", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          activity_type: "buy_flower",
+          points: -price, // Negative to deduct
+          description: `Mua hoa: ${flowerId}`,
+        }),
+      })
+      
+      // Add to owned flowers
+      setOwnedFlowers(prev => [...prev, flowerId])
+      setCurrentFlower(flowerId)
+      setRefreshKey(prev => prev + 1)
+      alert(`✅ Đã mua hoa thành công! 🌸`)
+    } catch (err) {
+      console.error("Error buying flower:", err)
+      alert(`Lỗi khi mua hoa 😢`)
+    }
+  }
+
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-blue-50 py-12 overflow-hidden">
       {/* 💞 Hiệu ứng tim bay */}
@@ -141,9 +168,18 @@ export default function GamificationPage() {
           <LovePointsDisplay />
         </div>
 
+        {/* Flower Shop */}
+        <div className="mb-6">
+          <FlowerShop 
+            currentPoints={totalPoints}
+            ownedFlowers={ownedFlowers}
+            onBuyFlower={handleBuyFlower}
+          />
+        </div>
+
         {/* Love Tree */}
         <div className="mb-6" key={`tree-${refreshKey}`}>
-          <LoveTree totalPoints={totalPoints} />
+          <LoveTree totalPoints={totalPoints} currentFlower={currentFlower} />
         </div>
 
         {/* Achievements */}

@@ -7,71 +7,77 @@ interface LoveTreeProps {
   totalPoints: number
 }
 
-export default function LoveTree({ totalPoints }: LoveTreeProps) {
-  const getTreeLevel = (points: number) => {
-    if (points >= 5000) return { 
-      level: 6, 
-      name: "Cây tình yêu vĩnh cửu", 
-      emoji: "🌹", 
-      color: "from-red-500 to-pink-600",
-      description: "Cây tình yêu của chúng ta đã nở hoa và mãi mãi xanh tươi",
-      sparkles: "✨✨✨"
+interface LoveTreeProps {
+  totalPoints: number
+  currentFlower?: string
+}
+
+export default function LoveTree({ totalPoints, currentFlower }: LoveTreeProps) {
+  // Giảm độ khó - thresholds thấp hơn
+  const getTreeLevel = (points: number, flower?: string) => {
+    // Nếu user đã mua hoa, show cây đó
+    if (flower === "rose") return { 
+      level: 3, name: "Hoa Hồng", emoji: "🌹", color: "from-red-500 to-pink-600",
+      description: "Hoa hồng đỏ nở rộ - tình yêu đam mê", sparkles: "✨✨"
     }
-    if (points >= 2000) return { 
-      level: 5, 
-      name: "Cây đang kết trái", 
-      emoji: "🌳", 
-      color: "from-green-500 to-emerald-600",
-      description: "Cây đang ra hoa kết trái, tình yêu ngày càng đơm hoa",
-      sparkles: "✨✨"
+    if (flower === "cherry") return { 
+      level: 3, name: "Hoa Anh Đào", emoji: "🌸", color: "from-pink-400 to-rose-500",
+      description: "Hoa anh đào nở rộ - ngọt ngào dịu dàng", sparkles: "✨✨"
     }
-    if (points >= 1000) return { 
-      level: 4, 
-      name: "Cây trưởng thành", 
-      emoji: "🌲", 
-      color: "from-green-400 to-green-600",
-      description: "Cây đã lớn mạnh, lá xanh tươi tốt",
-      sparkles: "✨"
+    if (flower === "sunflower") return { 
+      level: 3, name: "Hoa Hướng Dương", emoji: "🌻", color: "from-yellow-400 to-orange-500",
+      description: "Hoa hướng dương nở rộ - ánh sáng và niềm vui", sparkles: "✨✨"
     }
+    if (flower === "tulip") return { 
+      level: 3, name: "Hoa Tulip", emoji: "🌷", color: "from-purple-400 to-pink-500",
+      description: "Hoa tulip nở rộ - tình yêu vĩnh cửu", sparkles: "✨✨"
+    }
+    if (flower === "lavender") return { 
+      level: 3, name: "Hoa Oải Hương", emoji: "🪻", color: "from-purple-500 to-indigo-600",
+      description: "Hoa oải hương nở rộ - bình yên tịnh tâm", sparkles: "✨✨"
+    }
+    if (flower === "jasmine") return { 
+      level: 3, name: "Hoa Nhài", emoji: "🤍", color: "from-gray-100 to-white",
+      description: "Hoa nhài nở rộ - tinh khiết tự nhiên", sparkles: "✨✨"
+    }
+
+    // Default levels - độ khó thấp hơn
     if (points >= 500) return { 
-      level: 3, 
-      name: "Cây con", 
-      emoji: "🌿", 
-      color: "from-green-300 to-green-500",
-      description: "Cây đang lớn dần, những cành lá mới nhú ra",
-      sparkles: ""
+      level: 4, name: "Vườn hoa đầy hoa", emoji: "🌼", 
+      color: "from-yellow-300 to-pink-400",
+      description: "Vườn hoa nở rộ đầy màu sắc", sparkles: "✨✨✨"
     }
     if (points >= 200) return { 
-      level: 2, 
-      name: "Chồi non", 
-      emoji: "🌱", 
-      color: "from-green-200 to-green-400",
-      description: "Mầm non đã nảy, cây bắt đầu mọc cao",
-      sparkles: ""
+      level: 3, name: "Cây đang ra hoa", emoji: "🌺", 
+      color: "from-pink-300 to-rose-400",
+      description: "Cây bắt đầu nở những bông hoa đầu tiên", sparkles: "✨"
+    }
+    if (points >= 100) return { 
+      level: 2, name: "Mầm hoa", emoji: "🌱", 
+      color: "from-green-300 to-green-500",
+      description: "Mầm cây bắt đầu mọc và lớn dần", sparkles: ""
     }
     return { 
-      level: 1, 
-      name: "Hạt giống tình yêu", 
-      emoji: "🌰", 
+      level: 1, name: "Hạt giống", emoji: "🌰", 
       color: "from-amber-400 to-orange-500",
-      description: "Hạt giống tình yêu vừa được gieo xuống",
-      sparkles: ""
+      description: "Hạt giống vừa được gieo xuống", sparkles: ""
     }
   }
 
   const getProgressToNext = (points: number) => {
-    const thresholds = [0, 200, 500, 1000, 2000, 5000]
+    // Giảm thresholds: 0, 100, 200, 500
+    const thresholds = [0, 100, 200, 500]
     for (let i = thresholds.length - 1; i >= 0; i--) {
       if (points >= thresholds[i]) {
-        const nextLevel = thresholds[i + 1] || 5000
+        const nextLevel = thresholds[i + 1] || 500
         const progress = ((points - thresholds[i]) / (nextLevel - thresholds[i])) * 100
         return { current: thresholds[i], next: nextLevel, progress: Math.min(100, progress) }
       }
     }
-    return { current: 0, next: 200, progress: 0 }
+    return { current: 0, next: 100, progress: 0 }
   }
-
-  const treeLevel = getTreeLevel(totalPoints)
+  
+  const treeLevel = getTreeLevel(totalPoints, currentFlower)
   const progress = getProgressToNext(totalPoints)
 
   return (
@@ -83,13 +89,13 @@ export default function LoveTree({ totalPoints }: LoveTreeProps) {
     >
       <div className="flex items-center gap-2 mb-6">
         <span className="text-2xl">{treeLevel.emoji}</span>
-        <h3 className="text-lg font-bold text-pink-600">Cây Tình Yêu</h3>
+        <h3 className="text-lg font-bold text-pink-600">Vườn Tình Yêu</h3>
       </div>
 
       {/* Tree Visual */}
       <div className="relative flex items-end justify-center mb-6 bg-gradient-to-b from-sky-50 to-green-50 rounded-xl p-8" style={{ height: '220px' }}>
-        {/* Sparkles effect for high levels */}
-        {treeLevel.level >= 4 && (
+              {/* Sparkles effect for high levels */}
+      {treeLevel.level >= 3 && (
           <motion.div
             className="absolute inset-0 flex items-center justify-center"
             animate={{ 
@@ -103,14 +109,14 @@ export default function LoveTree({ totalPoints }: LoveTreeProps) {
         )}
         
         <motion.div
-          animate={{ 
-            scale: [1, 1.05, 1],
-            y: treeLevel.level >= 5 ? [0, -5, 0] : 0
-          }}
+                      animate={{ 
+              scale: [1, 1.05, 1],
+              y: treeLevel.level >= 4 ? [0, -5, 0] : 0
+            }}
           transition={{ duration: 2, repeat: Infinity }}
           className="text-center relative z-10"
         >
-          <div className={`text-9xl mb-3 ${treeLevel.level >= 4 ? 'animate-pulse' : ''} filter drop-shadow-lg`}>
+          <div className={`text-9xl mb-3 ${treeLevel.level >= 3 ? 'animate-pulse' : ''} filter drop-shadow-lg`}>
             {treeLevel.emoji}
           </div>
           <motion.div
@@ -120,7 +126,7 @@ export default function LoveTree({ totalPoints }: LoveTreeProps) {
           >
             {treeLevel.name}
           </motion.div>
-          <div className="text-xs text-gray-600">Cấp độ {treeLevel.level}/6</div>
+          <div className="text-xs text-gray-600">Cấp độ {treeLevel.level}/4</div>
           {treeLevel.description && (
             <div className="text-xs text-gray-500 mt-2 italic max-w-xs">
               {treeLevel.description}
@@ -167,7 +173,7 @@ export default function LoveTree({ totalPoints }: LoveTreeProps) {
       )}
 
       {/* Max Level Celebration */}
-      {treeLevel.level === 6 && (
+      {treeLevel.level === 4 && (
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
