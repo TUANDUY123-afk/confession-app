@@ -23,7 +23,7 @@ export default function GamificationPage() {
   const [claimedStages, setClaimedStages] = useState<number[]>([])
   const [showClaimPopup, setShowClaimPopup] = useState(false)
 
-  const handleClaimReward = async (coins: number, stageIndex: number) => {
+  const handleClaimReward = async (coins: number, stageIndex: number, flowerId?: string) => {
     try {
       await fetch("/api/gamification/points", {
         method: "POST",
@@ -32,13 +32,19 @@ export default function GamificationPage() {
           activity_type: "claim_flower_stage_reward",
           points: 0,
           coins: coins,
-          description: `Nhận thưởng giai đoạn ${stageIndex}`,
+          description: `Nhận thưởng giai đoạn ${stageIndex}${flowerId ? ` - ${flowerId}` : ''}`,
         }),
       })
       
       // Update claimed stages
       setClaimedStages(prev => [...prev, stageIndex])
+      
+      // Update local coins state immediately for better UX
+      setTotalCoins(prev => prev + coins)
+      
+      // Refresh data from server
       setRefreshKey(prev => prev + 1)
+      
       alert(`✅ Đã nhận ${coins} xu! 🎉`)
     } catch (err) {
       console.error("Error claiming reward:", err)
@@ -441,15 +447,15 @@ export default function GamificationPage() {
                               <span>🪙</span>
                               {claim.coins}
                             </div>
-                            <button
-                              onClick={() => {
-                                handleClaimReward(claim.coins, claim.stageIndex)
-                                setShowClaimPopup(false)
-                              }}
-                              className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-lg font-bold hover:from-yellow-500 hover:to-orange-600 transition-all"
-                            >
-                              Nhận
-                            </button>
+                                                         <button
+                               onClick={() => {
+                                 handleClaimReward(claim.coins, claim.stageIndex, claim.flowerId)
+                                 setShowClaimPopup(false)
+                               }}
+                               className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-lg font-bold hover:from-yellow-500 hover:to-orange-600 transition-all"
+                             >
+                               Nhận
+                             </button>
                           </div>
                         </div>
                       </div>
