@@ -9,90 +9,105 @@ interface LoveTreeProps {
 }
 
 export default function LoveTree({ totalPoints, currentFlower }: LoveTreeProps) {
+  // Stage emojis matching MyFlowers component
+  const getStageEmojis = (flowerId?: string) => {
+    const emojis: { [key: string]: string[] } = {
+      rose: ["🌱", "🌿", "🌺", "🌹"],
+      cherry: ["🌱", "🌿", "🌳", "🌸"],
+      sunflower: ["🌱", "🌿", "🌾", "🌻"],
+      tulip: ["🌱", "🌿", "🌷", "🌷"],
+      lavender: ["🌱", "🌿", "🪻", "🪻"],
+      jasmine: ["🌱", "🌿", "🤍", "🤍"]
+    }
+    return emojis[flowerId || ""] || ["🌱", "🌿", "🌺", "🌹"]
+  }
+
   // Giảm độ khó - thresholds thấp hơn
   const getTreeLevel = (points: number, flower?: string) => {
     // Nếu user đã mua hoa, show các giai đoạn phát triển của hoa đó
+    const emojis = getStageEmojis(flower)
+    
     if (flower === "rose") {
       if (points >= 500) return { 
-        level: 4, name: "Hoa Hồng Nở Rộ", emoji: "🌹", color: "from-red-500 to-pink-600",
+        level: 4, name: "Hoa Hồng Nở Rộ", emoji: emojis[3], color: "from-red-500 to-pink-600",
         description: "Hoa hồng nở rộ đỏ thắm - tình yêu đam mê", sparkles: "✨✨✨"
       }
       if (points >= 200) return { 
-        level: 3, name: "Hoa Hồng Chớm Nở", emoji: "🌺", color: "from-pink-400 to-red-500",
+        level: 3, name: "Hoa Hồng Chớm Nở", emoji: emojis[2], color: "from-pink-400 to-red-500",
         description: "Hoa hồng đang hé nở những cánh đầu tiên", sparkles: "✨✨"
       }
       return { 
-        level: 2, name: "Mầm Hồng", emoji: "🌱", color: "from-pink-300 to-red-400",
+        level: 2, name: "Mầm Hồng", emoji: emojis[0], color: "from-pink-300 to-red-400",
         description: "Mầm hoa hồng đang lớn dần", sparkles: "✨"
       }
     }
     if (flower === "cherry") {
       if (points >= 500) return { 
-        level: 4, name: "Anh Đào Nở Rộ", emoji: "🌸", color: "from-pink-400 to-rose-500",
+        level: 4, name: "Anh Đào Nở Rộ", emoji: emojis[3], color: "from-pink-400 to-rose-500",
         description: "Hoa anh đào nở rộ như tuyết rơi", sparkles: "✨✨✨"
       }
       if (points >= 200) return { 
-        level: 3, name: "Anh Đào Chớm Nở", emoji: "🌿", color: "from-pink-300 to-rose-400",
+        level: 3, name: "Anh Đào Chớm Nở", emoji: emojis[2], color: "from-pink-300 to-rose-400",
         description: "Cây anh đào bắt đầu ra hoa", sparkles: "✨✨"
       }
       return { 
-        level: 2, name: "Mầm Anh Đào", emoji: "🌱", color: "from-green-300 to-pink-300",
+        level: 2, name: "Mầm Anh Đào", emoji: emojis[0], color: "from-green-300 to-pink-300",
         description: "Cây anh đào đang lớn dần", sparkles: "✨"
       }
     }
     if (flower === "sunflower") {
       if (points >= 500) return { 
-        level: 4, name: "Hướng Dương Nở Rộ", emoji: "🌻", color: "from-yellow-400 to-orange-500",
+        level: 4, name: "Hướng Dương Nở Rộ", emoji: emojis[3], color: "from-yellow-400 to-orange-500",
         description: "Hoa hướng dương vàng rực rỡ như mặt trời", sparkles: "✨✨✨"
       }
       if (points >= 200) return { 
-        level: 3, name: "Hướng Dương Sắp Nở", emoji: "🌿", color: "from-green-400 to-yellow-400",
+        level: 3, name: "Hướng Dương Sắp Nở", emoji: emojis[2], color: "from-green-400 to-yellow-400",
         description: "Hoa hướng dương sắp nở vàng tươi", sparkles: "✨✨"
       }
       return { 
-        level: 2, name: "Mầm Hướng Dương", emoji: "🌱", color: "from-green-300 to-yellow-300",
+        level: 2, name: "Mầm Hướng Dương", emoji: emojis[0], color: "from-green-300 to-yellow-300",
         description: "Mầm hướng dương đang cao lớn", sparkles: "✨"
       }
     }
     if (flower === "tulip") {
       if (points >= 500) return { 
-        level: 4, name: "Tulip Nở Rộ", emoji: "🌷", color: "from-purple-400 to-pink-500",
+        level: 4, name: "Tulip Nở Rộ", emoji: emojis[3], color: "from-purple-400 to-pink-500",
         description: "Tulip nở đầy màu sắc - tình yêu hoàn mỹ", sparkles: "✨✨✨"
       }
       if (points >= 200) return { 
-        level: 3, name: "Tulip Đang Nở", emoji: "🌺", color: "from-pink-300 to-purple-400",
+        level: 3, name: "Tulip Đang Nở", emoji: emojis[2], color: "from-pink-300 to-purple-400",
         description: "Tulip đang từ từ hé nở", sparkles: "✨✨"
       }
       return { 
-        level: 2, name: "Mầm Tulip", emoji: "🌱", color: "from-green-300 to-purple-300",
+        level: 2, name: "Mầm Tulip", emoji: emojis[0], color: "from-green-300 to-purple-300",
         description: "Mầm tulip đang lớn lên", sparkles: "✨"
       }
     }
     if (flower === "lavender") {
       if (points >= 500) return { 
-        level: 4, name: "Oải Hương Nở Rộ", emoji: "🪻", color: "from-purple-500 to-indigo-600",
+        level: 4, name: "Oải Hương Nở Rộ", emoji: emojis[3], color: "from-purple-500 to-indigo-600",
         description: "Đồng hoa oải hương tím ngát hương", sparkles: "✨✨✨"
       }
       if (points >= 200) return { 
-        level: 3, name: "Oải Hương Đang Nở", emoji: "🌿", color: "from-indigo-400 to-purple-500",
+        level: 3, name: "Oải Hương Đang Nở", emoji: emojis[2], color: "from-indigo-400 to-purple-500",
         description: "Những bông hoa oải hương đầu tiên", sparkles: "✨✨"
       }
       return { 
-        level: 2, name: "Mầm Oải Hương", emoji: "🌱", color: "from-green-300 to-indigo-300",
+        level: 2, name: "Mầm Oải Hương", emoji: emojis[0], color: "from-green-300 to-indigo-300",
         description: "Mầm oải hương đang phát triển", sparkles: "✨"
       }
     }
     if (flower === "jasmine") {
       if (points >= 500) return { 
-        level: 4, name: "Nhài Nở Rộ", emoji: "🤍", color: "from-gray-100 to-white",
+        level: 4, name: "Nhài Nở Rộ", emoji: emojis[3], color: "from-gray-100 to-white",
         description: "Hoa nhài trắng ngần tỏa hương thơm", sparkles: "✨✨✨"
       }
       if (points >= 200) return { 
-        level: 3, name: "Nhài Đang Nở", emoji: "🌿", color: "from-green-200 to-white",
+        level: 3, name: "Nhài Đang Nở", emoji: emojis[2], color: "from-green-200 to-white",
         description: "Những bông hoa nhài trắng đầu tiên", sparkles: "✨✨"
       }
       return { 
-        level: 2, name: "Mầm Nhài", emoji: "🌱", color: "from-green-300 to-gray-200",
+        level: 2, name: "Mầm Nhài", emoji: emojis[0], color: "from-green-300 to-gray-200",
         description: "Mầm hoa nhài đang lớn dần", sparkles: "✨"
       }
     }

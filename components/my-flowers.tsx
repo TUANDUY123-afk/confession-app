@@ -168,27 +168,39 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
     const difficulty = getDifficulty(flower.price)
     const thresholds = difficulty.thresholds
     
+    // Define stage emojis for each flower type
+    const stageEmojis: { [key: string]: string[] } = {
+      rose: ["🌱", "🌿", "🌺", "🌹"],
+      cherry: ["🌱", "🌿", "🌳", "🌸"],
+      sunflower: ["🌱", "🌿", "🌾", "🌻"],
+      tulip: ["🌱", "🌿", "🌷", "🌷"],
+      lavender: ["🌱", "🌿", "🪻", "🪻"],
+      jasmine: ["🌱", "🌿", "🤍", "🤍"]
+    }
+    
+    const emojis = stageEmojis[flower.id] || ["🌱", "🌿", "🌺", "🌹"]
+    
     if (points >= thresholds[3]) return { 
       stage: "Nở Rộ", 
-      emoji: flower.emoji, 
+      emoji: emojis[3], // Fully bloomed flower
       progress: 100,
       sparkles: "✨✨✨"
     }
     if (points >= thresholds[2]) return { 
       stage: "Chớm Nở", 
-      emoji: flower.emoji, 
+      emoji: emojis[2], // Flowering
       progress: ((points - thresholds[2]) / (thresholds[3] - thresholds[2])) * 100,
       sparkles: "✨✨"
     }
     if (points >= thresholds[1]) return { 
       stage: "Phát Triển", 
-      emoji: flower.emoji, 
+      emoji: emojis[1], // Growing plant
       progress: ((points - thresholds[1]) / (thresholds[2] - thresholds[1])) * 100,
       sparkles: "✨"
     }
     return { 
       stage: "Mầm Non", 
-      emoji: "🌱", 
+      emoji: emojis[0], // Seedling
       progress: ((points - thresholds[0]) / (thresholds[1] - thresholds[0])) * 100,
       sparkles: ""
     }
