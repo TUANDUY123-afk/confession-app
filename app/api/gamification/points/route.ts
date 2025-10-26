@@ -21,7 +21,7 @@ export async function GET() {
     // If no data exists, return default values
     if (!data) {
       return NextResponse.json({
-        total_points: 0,
+        water: 0,
         current_streak: 0,
         longest_streak: 0,
         last_activity_date: null,
@@ -122,11 +122,11 @@ export async function POST(request: Request) {
         claimed_stages: claimedStages,
       }
       
-      // Update points if provided
+      // Update water if provided
       if (points !== undefined) {
-        updateData.total_points = ((currentPoints as any).total_points || 0) + points
+        updateData.water = ((currentPoints as any).water || 0) + points
       } else {
-        updateData.total_points = (currentPoints as any).total_points || 0
+        updateData.water = (currentPoints as any).water || 0
       }
       
       // Update coins if provided
@@ -164,9 +164,9 @@ export async function POST(request: Request) {
       }
       
       if (points !== undefined) {
-        insertData.total_points = points
+        insertData.water = points
       } else {
-        insertData.total_points = 0
+        insertData.water = 0
       }
       
       if (coins !== undefined) {

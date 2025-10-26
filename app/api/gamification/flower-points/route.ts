@@ -33,28 +33,28 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Add points to a flower manually and deduct from total_points
+// POST: Water a flower manually and deduct water
 export async function POST(request: Request) {
   try {
     const supabase = getSupabaseClient()
     const body = await request.json()
-    const { flower_id, points_to_add } = body
+    const { flower_id, water_to_add } = body
     
-    if (!flower_id || points_to_add === undefined) {
+    if (!flower_id || water_to_add === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
     
-    // Check if user has enough total points
+    // Check if user has enough water
     const { data: lovePoints } = await supabase
       .from("love_points")
-      .select("total_points")
+      .select("water")
       .eq("couple_id", COUPLE_ID)
       .single()
     
-    const currentTotalPoints = (lovePoints as any)?.total_points || 0
+    const currentWater = (lovePoints as any)?.water || 0
     
-    if (points_to_add > currentTotalPoints) {
-      return NextResponse.json({ error: "Không đủ điểm để phân bổ" }, { status: 400 })
+    if (water_to_add > currentWater) {
+      return NextResponse.json({ error: "Không đủ nước để tưới" }, { status: 400 })
     }
     
     // Get current flower points
@@ -65,15 +65,15 @@ export async function POST(request: Request) {
       .eq("flower_id", flower_id)
       .maybeSingle()
     
-    const currentFlowerPoints = (existingFlower as any)?.points || 0
-    const newFlowerPoints = currentFlowerPoints + points_to_add
+    const currentFlowerWater = (existingFlower as any)?.points || 0
+    const newFlowerWater = currentFlowerWater + water_to_add
     
-    // Update flower points
+    // Update flower water (stored in points column)
     if (existingFlower) {
       await supabase
         .from("flower_points")
         .update({
-          points: newFlowerPoints,
+          points: newFlowerWater,
           last_updated: new Date().toISOString(),
         } as any)
         .eq("couple_id", COUPLE_ID)
@@ -84,24 +84,24 @@ export async function POST(request: Request) {
         .insert({
           couple_id: COUPLE_ID,
           flower_id: flower_id,
-          points: newFlowerPoints,
+          points: newFlowerWater,
           last_updated: new Date().toISOString(),
         } as any)
     }
     
-    // Deduct points from total
+    // Deduct water
     await supabase
       .from("love_points")
       .update({
-        total_points: currentTotalPoints - points_to_add,
+        water: currentWater - water_to_add,
         updated_at: new Date().toISOString(),
       } as any)
       .eq("couple_id", COUPLE_ID)
     
     return NextResponse.json({ 
       success: true,
-      flower_points: newFlowerPoints,
-      total_points: currentTotalPoints - points_to_add
+      flower_water: newFlowerWater,
+      remaining_water: currentWater - water_to_add
     })
   } catch (err) {
     console.error("Error in POST /api/gamification/flower-points:", err)

@@ -7,19 +7,19 @@ export async function POST() {
   try {
     const supabase = getSupabaseClient()
 
-    // Reset love_points table
-    const { data, error } = await supabase
-      .from("love_points")
-      .update({
-        total_points: 0,
-        current_streak: 0,
-        longest_streak: 0,
-        last_activity_date: null,
-        coins: 0,
-        owned_flowers: [],
-        claimed_stages: [],
-        updated_at: new Date().toISOString(),
-      } as any)
+          // Reset love_points table
+      const { data, error } = await supabase
+        .from("love_points")
+        .update({
+          water: 0,
+          current_streak: 0,
+          longest_streak: 0,
+          last_activity_date: null,
+          coins: 0,
+          owned_flowers: [],
+          claimed_stages: [],
+          updated_at: new Date().toISOString(),
+        } as any)
       .eq("couple_id", COUPLE_ID)
       .select()
       .single()
