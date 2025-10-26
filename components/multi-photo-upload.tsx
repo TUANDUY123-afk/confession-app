@@ -105,49 +105,42 @@ export default function MultiPhotoUpload({
       for (const photo of selectedPhotos) {
         console.log("[Upload] Starting upload:", photo.file.name, photo.file.size, "type:", photo.file.type)
         
-        const formData = new FormData()
-        formData.append("file", photo.file)
-        formData.append("title", photo.title)
-
-        // Add timeout for mobile uploads
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 60000) // 60s timeout
+        // Upload directly to Supabase Storage
+        const { getSupabaseClient } = await import("@/lib/supabase-client")
+        const supabase = getSupabaseClient()
+        const timestamp = Date.now()
+        const filename = `photos/${timestamp}-${photo.file.name}`
         
-        try {
-          const response = await fetch("/api/upload-photo", {
-            method: "POST",
-            body: formData,
-            signal: controller.signal,
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("photos")
+          .upload(filename, photo.file, {
+            contentType: photo.file.type,
+            upsert: false,
           })
-          
-          clearTimeout(timeoutId)
 
-          if (!response.ok) {
-            const errorText = await response.text()
-            console.error("[Upload] Failed:", response.status, errorText)
-            throw new Error(`Upload failed: ${errorText}`)
-          }
-
-          const responseText = await response.text()
-          console.log("[Upload] Response text:", responseText)
-          
-          let data
-          try {
-            data = JSON.parse(responseText)
-          } catch (parseError) {
-            console.error("[Upload] JSON parse error:", parseError, "Response:", responseText)
-            throw new Error("Invalid response from server")
-          }
-          
-          console.log("[Upload] Success:", data.url)
-          onPhotoUploaded?.(data.url, data.title)
-        } catch (fetchError) {
-          clearTimeout(timeoutId)
-          if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-            throw new Error("Upload timeout - ảnh quá lớn hoặc mạng chậm")
-          }
-          throw fetchError
+        if (uploadError) {
+          console.error("[Upload] Supabase error:", uploadError)
+          throw new Error(`Upload failed: ${uploadError.message}`)
         }
+
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage.from("photos").getPublicUrl(uploadData.path)
+        const uploadedUrl = publicUrlData.publicUrl
+        console.log("[Upload] Success:", uploadedUrl)
+        
+        // Save to database
+        const { error: dbError } = await supabase.from("photos").insert({
+          url: uploadedUrl,
+          title: photo.title,
+          filename: photo.file.name,
+          uploaded_at: new Date().toISOString(),
+        })
+
+        if (dbError) {
+          console.error("[Upload] Database error:", dbError)
+        }
+
+        onPhotoUploaded?.(uploadedUrl, photo.title)
       }
 
       // ✅ Gửi thông báo sau khi tải ảnh thành công (chỉ 1 lần cho toàn bộ upload)
