@@ -205,6 +205,7 @@ export async function POST(request: Request) {
       
       if (wasNewFlower) {
         // This is a new flower purchase - start with 0 points
+        console.log("New flower purchased:", owned_flower, "- resetting points to 0")
         const { data: existing } = await supabase
           .from("flower_points")
           .select("*")
@@ -235,7 +236,8 @@ export async function POST(request: Request) {
     }
     
     // Update points for all owned flowers (only when earning points, not buying flowers)
-    if (points !== undefined && points > 0 && ownedFlowers.length > 0 && !owned_flower) {
+    if (points !== undefined && points > 0 && ownedFlowers.length > 0) {
+      console.log("Updating points for owned flowers:", ownedFlowers, "Adding points:", points)
       for (const flowerId of ownedFlowers) {
         // Get current flower points
         const { data: flowerData } = await supabase
@@ -247,6 +249,8 @@ export async function POST(request: Request) {
         
         const currentFlowerPoints = (flowerData as any)?.points || 0
         const newFlowerPoints = currentFlowerPoints + points
+        
+        console.log(`Flower ${flowerId}: ${currentFlowerPoints} + ${points} = ${newFlowerPoints}`)
         
         // Update or insert flower points
         const { data: existing } = await supabase
