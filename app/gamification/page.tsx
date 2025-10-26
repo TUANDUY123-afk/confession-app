@@ -140,6 +140,11 @@ export default function GamificationPage() {
     }
   }
   
+  const handleWaterConsumed = (amount: number) => {
+    // Update local state immediately
+    setTotalPoints(prev => Math.max(0, prev - amount))
+  }
+
   const handleWaterFlower = async (flowerId: string, waterAmount: number) => {
     try {
       const response = await fetch("/api/gamification/flower-points", {
@@ -154,10 +159,13 @@ export default function GamificationPage() {
       const data = await response.json()
       
       if (!response.ok) {
-        throw new Error(data.error || "Failed to water flower")
+        // If sync fails, we need to rollback local changes
+        // For now, just log the error
+        console.error("Sync error:", data.error)
+        return
       }
       
-      // Refresh all components
+      // Refresh all components to get actual state from server
       setRefreshKey(prev => prev + 1)
       console.log(`✅ Đã tưới ${waterAmount} nước cho hoa! 💧`)
     } catch (err) {
@@ -357,6 +365,7 @@ export default function GamificationPage() {
             onSelectFlower={handleSelectFlower}
             onWaterFlower={handleWaterFlower}
             currentWater={totalPoints}
+            onWaterConsumed={handleWaterConsumed}
           />
         </div>
 

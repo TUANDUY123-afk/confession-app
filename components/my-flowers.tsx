@@ -18,6 +18,7 @@ interface MyFlowersProps {
   onSelectFlower: (flowerId: string) => void
   onWaterFlower?: (flowerId: string, waterAmount: number) => void
   currentWater: number
+  onWaterConsumed?: (amount: number) => void
 }
 
 const FLOWERS: { [key: string]: Flower } = {
@@ -72,10 +73,16 @@ const getDifficulty = (price: number) => {
   return { level: "Dễ", thresholds: [0, 100, 200, 500], color: "text-green-600" }
 }
 
-export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, onWaterFlower, currentWater }: MyFlowersProps) {
+export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, onWaterFlower, currentWater, onWaterConsumed }: MyFlowersProps) {
   const [flowerWaterData, setFlowerWaterData] = useState<{ [key: string]: number }>({})
   const [pendingSync, setPendingSync] = useState<{ [key: string]: number }>({})
   const [syncTimeouts, setSyncTimeouts] = useState<{ [key: string]: NodeJS.Timeout }>({})
+  const [localWater, setLocalWater] = useState(currentWater)
+
+  // Sync local water with parent
+  useEffect(() => {
+    setLocalWater(currentWater)
+  }, [currentWater])
 
   // Fetch flower water data
   useEffect(() => {
@@ -100,16 +107,24 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
   }, [ownedFlowers, totalPoints])
 
   const handleWaterClick = (flowerId: string) => {
-    // Check if has enough water
-    if (currentWater < 10) {
+    // Check if has enough water (use localWater for real-time check)
+    if (localWater < 10) {
       return
     }
 
-    // Update UI immediately
+    // Update UI immediately - add water to flower
     setFlowerWaterData(prev => ({
       ...prev,
       [flowerId]: (prev[flowerId] || 0) + 10
     }))
+
+    // Decrement local water immediately
+    setLocalWater(prev => prev - 10)
+
+    // Notify parent about water consumption
+    if (onWaterConsumed) {
+      onWaterConsumed(10)
+    }
 
     // Track pending sync
     setPendingSync(prev => ({
@@ -220,7 +235,7 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
           const flowerWater = flowerWaterData[flowerId] || 0
           const difficulty = getDifficulty(flower.price)
           const stage = getFlowerStage(flower, flowerWater)
-          const hasEnoughWater = currentWater >= 10
+          const hasEnoughWater = localWater >= 10
           const hasPendingSync = (pendingSync[flowerId] || 0) > 0
 
           return (
@@ -300,7 +315,7 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
         animate={{ opacity: 1, y: 0 }}
         className="mt-4 text-center text-xs text-gray-600 bg-white/60 rounded-lg p-3"
       >
-        💡 Tip: Tưới nước cho hoa để phát triển! Nước: {currentWater} 💧
+        💡 Tip: Tưới nước cho hoa để phát triển! Nước: {localWater} 💧
       </motion.div>
     </motion.div>
   )
