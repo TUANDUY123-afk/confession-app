@@ -44,6 +44,15 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { activity_type, points, description, coins, claimed_stage, owned_flower } = body
     
+    console.log("POST /api/gamification/points - Request body:", {
+      activity_type,
+      points,
+      description,
+      coins,
+      claimed_stage,
+      owned_flower
+    })
+    
     if (activity_type === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
@@ -121,9 +130,16 @@ export async function POST(request: Request) {
       // Update coins if provided
       if (coins !== undefined) {
         updateData.coins = ((currentPoints as any).coins || 0) + coins
+        console.log("Updating coins:", {
+          oldCoins: (currentPoints as any).coins || 0,
+          coinsToAdd: coins,
+          newCoins: updateData.coins
+        })
       } else {
         updateData.coins = (currentPoints as any).coins || 0
       }
+      
+      console.log("Update data:", updateData)
       
       const result = await supabase
         .from("love_points")
@@ -170,6 +186,8 @@ export async function POST(request: Request) {
       console.error("Error updating love points:", error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
+    
+    console.log("Updated love points successfully:", data)
     
     // Log activity
     await supabase.from("activity_log").insert({

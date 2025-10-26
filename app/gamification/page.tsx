@@ -27,7 +27,7 @@ export default function GamificationPage() {
     try {
       const claimId = flowerId ? `${flowerId}_${stageIndex}` : stageIndex.toString()
       
-      await fetch("/api/gamification/points", {
+      const response = await fetch("/api/gamification/points", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -38,6 +38,12 @@ export default function GamificationPage() {
           description: `Nhận thưởng giai đoạn ${stageIndex}${flowerId ? ` - ${flowerId}` : ''}`,
         }),
       })
+      
+      const data = await response.json()
+      console.log("Claim reward response:", data)
+      
+      // Update local state immediately for better UX
+      setTotalCoins(prev => prev + coins)
       
       // Refresh data from server
       setRefreshKey(prev => prev + 1)
