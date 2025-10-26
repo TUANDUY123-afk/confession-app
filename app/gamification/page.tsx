@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, ShoppingCart } from "lucide-react"
 import Link from "next/link"
 import LovePointsDisplay from "@/components/love-points-display"
 import LoveTree from "@/components/love-tree"
@@ -15,6 +15,7 @@ export default function GamificationPage() {
   const [refreshKey, setRefreshKey] = useState(0)
   const [ownedFlowers, setOwnedFlowers] = useState<string[]>([])
   const [currentFlower, setCurrentFlower] = useState<string | undefined>()
+  const [showShop, setShowShop] = useState(false)
 
   useEffect(() => {
     fetchPoints()
@@ -102,6 +103,7 @@ export default function GamificationPage() {
       setOwnedFlowers(prev => [...prev, flowerId])
       setCurrentFlower(flowerId)
       setRefreshKey(prev => prev + 1)
+      setShowShop(false) // Close shop after purchase
       alert(`✅ Đã mua hoa thành công! 🌸`)
     } catch (err) {
       console.error("Error buying flower:", err)
@@ -182,19 +184,49 @@ export default function GamificationPage() {
           />
         </div>
 
-        {/* Flower Shop */}
+        {/* Open Shop Button */}
         <div className="mb-6">
-          <FlowerShop 
-            currentPoints={totalPoints}
-            ownedFlowers={ownedFlowers}
-            onBuyFlower={handleBuyFlower}
-          />
+          <button
+            onClick={() => setShowShop(true)}
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-2xl shadow-lg hover:from-purple-600 hover:to-pink-600 transition-all font-bold text-lg flex items-center justify-center gap-2"
+          >
+            <ShoppingCart className="w-6 h-6" />
+            🌸 Mở Shop Hoa
+          </button>
         </div>
 
-        {/* Love Tree */}
-        <div className="mb-6" key={`tree-${refreshKey}`}>
-          <LoveTree totalPoints={totalPoints} currentFlower={currentFlower} />
-        </div>
+        {/* Flower Shop Popup */}
+        {showShop && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowShop(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-purple-600 flex items-center gap-2">
+                    <ShoppingCart className="w-6 h-6" />
+                    🌸 Shop Hoa
+                  </h2>
+                  <button
+                    onClick={() => setShowShop(false)}
+                    className="text-gray-500 hover:text-gray-700 transition text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                <FlowerShop 
+                  currentPoints={totalPoints}
+                  ownedFlowers={ownedFlowers}
+                  onBuyFlower={handleBuyFlower}
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Achievements */}
         <div className="mb-6" key={`achievements-${refreshKey}`}>
