@@ -6,6 +6,7 @@ import { X, ImageIcon, Pencil, Loader2 } from "lucide-react"
 import Image from "next/image"
 import { useNotifications } from "@/contexts/NotificationContext"
 import { getCurrentUser } from "@/utils/user"
+import { createClient } from "@supabase/supabase-js"
 
 interface SelectedPhoto {
   file: File
@@ -105,39 +106,50 @@ export default function MultiPhotoUpload({
       for (const photo of selectedPhotos) {
         console.log("[Upload] Starting upload:", photo.file.name, photo.file.size, "type:", photo.file.type)
         
-        // Upload using API but with streaming support
-        const formData = new FormData()
-        formData.append("file", photo.file)
-        formData.append("title", photo.title)
-
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 120000) // 120s timeout
+        // Upload directly to Supabase using client-side (bypass Vercel 4.5MB limit)
+        const supabaseUrl = "https://tbfvxykfxzvmjqinmpiw.supabase.co"
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRiZnZ4eWtmeHp2bWpxaW5tcGl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE0NjcxMjUsImV4cCI6MjA3NzA0MzEyNX0.EcbImB8wGrt8Zb_YfiNNWagXldX1Mb8MTMTLCU9SUIs"
         
-        try {
-          const response = await fetch("/api/upload-photo", {
-            method: "POST",
-            body: formData,
-            signal: controller.signal,
-          })
-          
-          clearTimeout(timeoutId)
-
-          if (!response.ok) {
-            const errorText = await response.text()
-            console.error("[Upload] Failed:", response.status, errorText)
-            throw new Error(`Upload failed: ${errorText}`)
-          }
-
-          const data = await response.json()
-          console.log("[Upload] Success:", data.url)
-          onPhotoUploaded?.(data.url, data.title)
-        } catch (fetchError) {
-          clearTimeout(timeoutId)
-          if (fetchError instanceof Error && fetchError.name === 'AbortError') {
-            throw new Error("Upload timeout - ảnh quá lớn hoặc mạng chậm")
-          }
-          throw fetchError
+        if (!supabaseUrl || !supabaseKey) {
+          throw new Error("Missing Supabase credentials")
         }
+        
+        const supabase = createClient(supabaseUrl, supabaseKey)
+        const timestamp = Date.now()
+        const filename = `photos/${timestamp}-${photo.file.name}`
+        
+        console.log("[Upload] Uploading to Supabase:", filename, photo.file.size)
+        
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from("photos")
+          .upload(filename, photo.file, {
+            contentType: photo.file.type,
+            upsert: false,
+          })
+
+        if (uploadError) {
+          console.error("[Upload] Supabase error:", uploadError)
+          throw new Error(`Upload failed: ${uploadError.message}`)
+        }
+
+        // Get public URL
+        const { data: publicUrlData } = supabase.storage.from("photos").getPublicUrl(uploadData.path)
+        const uploadedUrl = publicUrlData.publicUrl
+        console.log("[Upload] Success:", uploadedUrl)
+        
+        // Save to database
+        const { error: dbError } = await supabase.from("photos").insert({
+          url: uploadedUrl,
+          title: photo.title,
+          filename: photo.file.name,
+          uploaded_at: new Date().toISOString(),
+        })
+
+        if (dbError) {
+          console.error("[Upload] Database error:", dbError)
+        }
+
+        onPhotoUploaded?.(uploadedUrl, photo.title)
       }
 
       // ✅ Gửi thông báo sau khi tải ảnh thành công (chỉ 1 lần cho toàn bộ upload)
