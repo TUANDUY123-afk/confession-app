@@ -204,8 +204,9 @@ export async function POST(request: Request) {
       const wasNewFlower = !((currentPoints as any)?.owned_flowers || []).includes(owned_flower)
       
       if (wasNewFlower) {
-        // This is a new flower purchase - start with 0 points
-        console.log("New flower purchased:", owned_flower, "- resetting points to 0")
+        // This is a new flower purchase - start with 0 points from purchase time
+        const purchasedAt = new Date().toISOString()
+        console.log("New flower purchased:", owned_flower, "- resetting points to 0 at", purchasedAt)
         const { data: existing } = await supabase
           .from("flower_points")
           .select("*")
@@ -218,7 +219,8 @@ export async function POST(request: Request) {
             .from("flower_points")
             .update({
               points: 0,
-              last_updated: new Date().toISOString(),
+              purchased_at: purchasedAt, // Set purchase timestamp
+              last_updated: purchasedAt,
             } as any)
             .eq("couple_id", COUPLE_ID)
             .eq("flower_id", owned_flower)
@@ -229,7 +231,8 @@ export async function POST(request: Request) {
               couple_id: COUPLE_ID,
               flower_id: owned_flower,
               points: 0,
-              last_updated: new Date().toISOString(),
+              purchased_at: purchasedAt, // Set purchase timestamp
+              last_updated: purchasedAt,
             } as any)
         }
       }
