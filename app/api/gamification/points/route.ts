@@ -46,11 +46,11 @@ export async function POST(request: Request) {
     }
     
     // Get current points
-    let { data: currentPoints } = await supabase
+    let { data: currentPoints, error: fetchError } = await supabase
       .from("love_points")
       .select("*")
       .eq("couple_id", COUPLE_ID)
-      .single()
+      .maybeSingle()
     
     // Calculate streak
     const today = new Date().toISOString().split('T')[0]
@@ -58,40 +58,64 @@ export async function POST(request: Request) {
     let longestStreak = 0
     
     if (currentPoints) {
+      const points = currentPoints as any
       // Check if last activity was yesterday (maintain streak)
-      const lastActivity = new Date(currentPoints.last_activity_date)
+      const lastActivity = new Date(points.last_activity_date)
       const yesterday = new Date()
       yesterday.setDate(yesterday.getDate() - 1)
       
-      if (currentPoints.last_activity_date === today) {
+      if (points.last_activity_date === today) {
         // Already logged today, don't increase streak
-        newStreak = currentPoints.current_streak
-        longestStreak = currentPoints.longest_streak
+        newStreak = points.current_streak
+        longestStreak = points.longest_streak
       } else if (lastActivity.toDateString() === yesterday.toDateString()) {
         // Last activity was yesterday, continue streak
-        newStreak = currentPoints.current_streak + 1
-        longestStreak = Math.max(newStreak, currentPoints.longest_streak)
+        newStreak = points.current_streak + 1
+        longestStreak = Math.max(newStreak, points.longest_streak)
       } else if (lastActivity.toDateString() === new Date(today).toDateString()) {
         // Already logged today
-        newStreak = currentPoints.current_streak
-        longestStreak = currentPoints.longest_streak
+        newStreak = points.current_streak
+        longestStreak = points.longest_streak
       }
       // else: streak broken, reset to 1
     }
     
     // Update or insert love points
-    const { data, error } = await supabase
-      .from("love_points")
-      .upsert({
-        couple_id: COUPLE_ID,
-        total_points: (currentPoints?.total_points || 0) + points,
-        current_streak: newStreak,
-        longest_streak: longestStreak,
-        last_activity_date: today,
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single()
+    let data, error
+    
+    if (currentPoints) {
+      // Update existing record
+      const result = await supabase
+        .from("love_points")
+        .update({
+          total_points: (currentPoints as any).total_points + points,
+          current_streak: newStreak,
+          longest_streak: longestStreak,
+          last_activity_date: today,
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq("couple_id", COUPLE_ID)
+        .select()
+        .single()
+      data = result.data
+      error = result.error
+    } else {
+      // Insert new record
+      const result = await supabase
+        .from("love_points")
+        .insert({
+          couple_id: COUPLE_ID,
+          total_points: points,
+          current_streak: newStreak,
+          longest_streak: longestStreak,
+          last_activity_date: today,
+          updated_at: new Date().toISOString(),
+        } as any)
+        .select()
+        .single()
+      data = result.data
+      error = result.error
+    }
     
     if (error) {
       console.error("Error updating love points:", error)
@@ -104,7 +128,7 @@ export async function POST(request: Request) {
       activity_type,
       points_awarded: points,
       description,
-    })
+    } as any)
     
     return NextResponse.json(data)
   } catch (err) {
