@@ -66,6 +66,11 @@ export default function LoveStoryPage() {
     }
   }
 
+  // Callback to refresh events
+  const handleEventsChange = () => {
+    fetchEvents()
+  }
+
   // ✅ Tính số ngày yêu
   useEffect(() => {
     if (startDate) {
@@ -162,7 +167,7 @@ export default function LoveStoryPage() {
 
         {/* Love Calendar */}
         <div className="mb-6">
-          <LoveCalendar />
+          <LoveCalendar onEventsChange={handleEventsChange} />
         </div>
 
         <MilestoneList

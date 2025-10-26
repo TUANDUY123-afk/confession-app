@@ -33,7 +33,11 @@ interface DayData {
   isCurrentMonth: boolean
 }
 
-function LoveCalendar() {
+interface LoveCalendarProps {
+  onEventsChange?: () => void
+}
+
+function LoveCalendar({ onEventsChange }: LoveCalendarProps) {
   const { addNotification } = useNotifications()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [events, setEvents] = useState<LoveEvent[]>([])
@@ -220,6 +224,9 @@ function LoveCalendar() {
         setNewEventDescription("")
         setNewEventImage(null)
         setIsAddDialogOpen(false)
+        
+        // Call callback to refresh EventCountdown
+        onEventsChange?.()
         
         // Send notification to all users
         const currentUser = localStorage.getItem("lovable_user") || "Đôi ta"
