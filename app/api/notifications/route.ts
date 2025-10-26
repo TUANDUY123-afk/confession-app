@@ -17,11 +17,11 @@ export async function GET(req: Request) {
     
     let query = supabase.from("notifications").select("*")
     
-    // Nếu có user, lấy tất cả thông báo (không filter)
-    // User sẽ thấy tất cả notifications từ mọi người
-    // Không cần filter vì muốn tất cả user thấy tất cả notifications
+    // Filter notifications cho user hiện tại
+    // Chỉ show notifications có target = user hoặc không có target (global)
     if (user) {
-      query = query // Không filter, để tất cả user thấy tất cả notifications
+      query = query.or(`target.eq.${user},target.is.null`)
+      console.log("[GET] Fetching notifications for user:", user)
     }
     
     const { data, error } = await query.order("timestamp", { ascending: false })
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
     
     // Log để debug
     if (data && data.length > 0) {
-      console.log("Fetched notifications sample:", data[0])
+      console.log("[GET] Fetched", data.length, "notifications for user:", user)
     }
     
     return NextResponse.json({ notifications: data || [] })
