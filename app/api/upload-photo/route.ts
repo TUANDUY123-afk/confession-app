@@ -11,15 +11,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    const MAX_FILE_SIZE = 25 * 1024 * 1024
+    const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB for large photos from iOS
     if (file.size > MAX_FILE_SIZE) {
       return NextResponse.json(
-        { error: `File size exceeds 25MB limit. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB` },
+        { error: `File size exceeds 50MB limit. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB` },
         { status: 413 },
       )
     }
 
-    console.log("[v0] Uploading file:", file.name, "type:", file.type, "size:", file.size)
+    console.log("[v0] Uploading file:", file.name, "type:", file.type, "size:", file.size, "dimensions check needed")
 
     const supabase = getSupabaseClient()
     const timestamp = Date.now()
