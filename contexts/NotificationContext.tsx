@@ -106,11 +106,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const u = await getCurrentUser()
       const authorName = u?.name || "Ẩn danh"
 
-      console.log("Adding notification with link:", notification.link)
+      console.log("[addNotification] Called with:", notification.link)
       
       // Chỉ gọi API, không thêm vào local state
-      // Vì API sẽ tạo nhiều notifications cho từng user, và fetchNotifications sẽ tự động load lại
-      await fetch("/api/notifications", {
+      const response = await fetch("/api/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -119,12 +118,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }),
       })
       
-      // Refetch notifications sau 2s để load từ API (tăng delay để tránh race condition)
+      const result = await response.json()
+      console.log("[addNotification] API response:", result)
+      
+      // Refetch notifications sau 3s để load từ API
       setTimeout(() => {
         if (user) {
           fetchNotifications(user)
         }
-      }, 2000)
+      }, 3000)
     } catch (err) {
       console.error("addNotification error:", err)
     }

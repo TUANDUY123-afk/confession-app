@@ -65,12 +65,16 @@ export async function POST(req: Request) {
           timestamp: new Date().toISOString(),
         }))
         
-        const { error } = await supabase.from("notifications").insert(notifications)
+        console.log("[API] Inserting notifications:", notifications.length)
+        
+        const { data, error } = await supabase.from("notifications").insert(notifications).select()
         
         if (error) {
           console.error("Supabase insert error:", error)
           throw error
         }
+        
+        console.log("[API] Inserted notifications:", data?.length)
         return NextResponse.json({ success: true, sentTo: usernames.length })
       }
     }
