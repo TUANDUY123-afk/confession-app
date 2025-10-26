@@ -100,32 +100,35 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     return () => clearInterval(interval)
   }, [user])
 
-  // 📨 Thêm thông báo mới
+  // 📨 Thêm thông báo mới (chỉ gọi API, không thêm local vì API đã tạo nhiều bản cho từng user)
   const addNotification = useCallback(async (notification: Omit<Notification, "id" | "timestamp" | "read">) => {
-    const u = await getCurrentUser()
-    const authorName = u?.name || "Ẩn danh"
-
-    const newNotification: Notification = {
-      ...notification,
-      author: authorName,
-      id: crypto.randomUUID(),
-      timestamp: new Date().toISOString(),
-      read: false,
-    }
-
-    setNotifications((prev) => [newNotification, ...prev])
-
     try {
-      console.log("Adding notification with link:", newNotification.link)
+      const u = await getCurrentUser()
+      const authorName = u?.name || "Ẩn danh"
+
+      console.log("Adding notification with link:", notification.link)
+      
+      // Chỉ gọi API, không thêm vào local state
+      // Vì API sẽ tạo nhiều notifications cho từng user, và fetchNotifications sẽ tự động load lại
       await fetch("/api/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newNotification),
+        body: JSON.stringify({
+          ...notification,
+          author: authorName,
+        }),
       })
+      
+      // Refetch notifications sau 1s để load từ API
+      setTimeout(() => {
+        if (user) {
+          fetchNotifications(user)
+        }
+      }, 1000)
     } catch (err) {
       console.error("addNotification error:", err)
     }
-  }, [])
+  }, [user, fetchNotifications])
 
   // ✅ Đánh dấu 1 thông báo đã đọc (Optimized for instant UX)
   const markAsRead = useCallback(async (id: string) => {
