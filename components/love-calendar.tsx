@@ -45,6 +45,7 @@ function LoveCalendar() {
   const [newEventDescription, setNewEventDescription] = useState("")
   const [newEventImage, setNewEventImage] = useState<string | null>(null)
   const [newEventType, setNewEventType] = useState<"outing" | "dining" | "travel" | "shopping" | "birthday" | "important" | "cafe" | "chilling" | "netflix">("outing")
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   // Get first day of month and number of days
   const year = currentDate.getFullYear()
@@ -177,6 +178,14 @@ function LoveCalendar() {
     if (!newEventTitle.trim() || !newEventDate) return
     
     try {
+      console.log("Adding event with image:", {
+        title: newEventTitle,
+        date: newEventDate,
+        type: newEventType,
+        hasImage: !!newEventImage,
+        imageSize: newEventImage?.length || 0
+      })
+      
       const response = await fetch("/api/love-events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -189,11 +198,15 @@ function LoveCalendar() {
         }),
       })
       
-      const { data, error } = await response.json()
+      const responseText = await response.text()
+      console.log("API Response:", response.status, responseText)
+      
+      const result = JSON.parse(responseText)
+      const { data, error } = result
       
       if (error || !response.ok) {
         console.error("API Error:", error)
-        alert(`Lỗi khi thêm sự kiện 😢: ${error || "Unknown error"}`)
+        alert(`Lỗi khi thêm sự kiện 😢: ${error || result.error || "Unknown error"}`)
       } else {
         const newEvent: LoveEvent = {
           id: data.id || Date.now().toString(),
@@ -216,26 +229,39 @@ function LoveCalendar() {
     }
   }
   
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert("File ảnh quá lớn! Vui lòng chọn file nhỏ hơn 5MB.")
+      // Check file size (max 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        alert("File ảnh quá lớn! Vui lòng chọn file nhỏ hơn 10MB.")
         return
       }
       
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        const result = reader.result as string
-        console.log("Image loaded, size:", Math.round(result.length / 1024), "KB")
-        setNewEventImage(result)
+      setUploadingImage(true)
+      try {
+        // Upload to Supabase Storage
+        const formData = new FormData()
+        formData.append("file", file)
+        
+        const response = await fetch("/api/upload-event-image", {
+          method: "POST",
+          body: formData,
+        })
+        
+        if (!response.ok) {
+          throw new Error("Upload failed")
+        }
+        
+        const { url } = await response.json()
+        console.log("Image uploaded to:", url)
+        setNewEventImage(url)
+      } catch (err) {
+        console.error("Error uploading image:", err)
+        alert("Lỗi khi upload ảnh")
+      } finally {
+        setUploadingImage(false)
       }
-      reader.onerror = (err) => {
-        console.error("Error reading file:", err)
-        alert("Lỗi khi đọc file ảnh")
-      }
-      reader.readAsDataURL(file)
     }
   }
   
@@ -411,7 +437,12 @@ function LoveCalendar() {
                 <div>
                   <label className="text-sm font-medium mb-1 block">Hình ảnh</label>
                   <div className="border-2 border-dashed rounded-lg p-4 text-center">
-                    {newEventImage ? (
+                    {uploadingImage ? (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto"></div>
+                        <p className="text-sm text-gray-500 mt-2">Đang upload ảnh...</p>
+                      </div>
+                    ) : newEventImage ? (
                       <div className="space-y-2">
                         <img src={newEventImage} alt="Preview" className="max-w-full max-h-40 mx-auto rounded" />
                         <Button
@@ -433,7 +464,7 @@ function LoveCalendar() {
                         />
                         <label htmlFor="image-upload" className="cursor-pointer">
                           <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-                          <p className="text-sm text-gray-500">Click để thêm ảnh</p>
+                          <p className="text-sm text-gray-500">Click để thêm ảnh (tối đa 10MB)</p>
                         </label>
                       </div>
                     )}
@@ -514,7 +545,9 @@ function LoveCalendar() {
                     onClick={(e) => {
                       e.stopPropagation()
                       setIsAddDialogOpen(true)
-                      setNewEventDate(dayData.date.toISOString().split("T")[0])
+                      // Use local date format to avoid timezone issues
+                      const localDate = formatDateString(dayData.date)
+                      setNewEventDate(localDate)
                     }}
                     className="text-[8px] sm:text-[10px] text-gray-300 hover:text-pink-500 cursor-pointer flex items-center gap-0.5"
                   >
@@ -657,7 +690,9 @@ function LoveCalendar() {
                   setSelectedDayEvents(null)
                   setSelectedDay(null)
                   setIsAddDialogOpen(true)
-                  setNewEventDate(selectedDay.toISOString().split("T")[0])
+                  // Use local date format to avoid timezone issues
+                  const localDate = formatDateString(selectedDay)
+                  setNewEventDate(localDate)
                 }}
                 className="w-full"
               >

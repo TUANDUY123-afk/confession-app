@@ -43,12 +43,8 @@ export async function POST(request: NextRequest) {
     // Generate unique ID
     const eventId = Date.now().toString()
 
-    // Prepare image - truncate if too long (> 5MB base64)
-    let finalImage = image || null
-    if (finalImage && finalImage.length > 5 * 1024 * 1024) {
-      console.warn("Image too large, truncating...")
-      finalImage = finalImage.substring(0, 5 * 1024 * 1024)
-    }
+    // Image is now a URL (from Supabase Storage), not base64
+    const finalImage = image || null
 
     // Insert new event into love_events table
     const { data: newEvent, error } = await supabase
