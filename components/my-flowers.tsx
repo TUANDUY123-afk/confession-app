@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Flower } from "lucide-react"
 
@@ -73,6 +73,77 @@ const getDifficulty = (price: number) => {
 }
 
 export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, onWaterFlower, currentWater }: MyFlowersProps) {
+  const [flowerWaterData, setFlowerWaterData] = useState<{ [key: string]: number }>({})
+  const [wateringFlowers, setWateringFlowers] = useState<Set<string>>(new Set())
+  const [waterDebounce, setWaterDebounce] = useState<{ [key: string]: NodeJS.Timeout }>({})
+
+  // Fetch flower water data
+  useEffect(() => {
+    const fetchFlowerWater = async () => {
+      try {
+        const res = await fetch("/api/gamification/flower-points")
+        const data = await res.json()
+        
+        const waterMap: { [key: string]: number } = {}
+        data.forEach((item: any) => {
+          waterMap[item.flower_id] = item.points || 0
+        })
+        setFlowerWaterData(waterMap)
+      } catch (err) {
+        console.error("Error fetching flower water:", err)
+      }
+    }
+
+    if (ownedFlowers.length > 0) {
+      fetchFlowerWater()
+    }
+  }, [ownedFlowers, totalPoints])
+
+  const handleWaterClick = (flowerId: string) => {
+    // Check if already watering
+    if (wateringFlowers.has(flowerId)) {
+      return
+    }
+
+    // Check debounce
+    if (waterDebounce[flowerId]) {
+      clearTimeout(waterDebounce[flowerId])
+    }
+
+    // Set debounce
+    const timeout = setTimeout(() => {
+      setWateringFlowers(prev => new Set([...prev, flowerId]))
+      
+      if (onWaterFlower) {
+        onWaterFlower(flowerId, 10)
+        
+        // Update local state immediately for smooth UI
+        setFlowerWaterData(prev => ({
+          ...prev,
+          [flowerId]: (prev[flowerId] || 0) + 10
+        }))
+        
+        // Remove from watering set after a short delay
+        setTimeout(() => {
+          setWateringFlowers(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(flowerId)
+            return newSet
+          })
+        }, 500)
+      }
+      
+      // Clear debounce
+      setWaterDebounce(prev => {
+        const newDebounce = { ...prev }
+        delete newDebounce[flowerId]
+        return newDebounce
+      })
+    }, 300)
+
+    setWaterDebounce(prev => ({ ...prev, [flowerId]: timeout }))
+  }
+
   const getFlowerStage = (flower: Flower, points: number) => {
     const difficulty = getDifficulty(flower.price)
     const thresholds = difficulty.thresholds
@@ -141,8 +212,11 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
           const flower = FLOWERS[flowerId]
           if (!flower) return null
           
+          const flowerWater = flowerWaterData[flowerId] || 0
           const difficulty = getDifficulty(flower.price)
-          const stage = getFlowerStage(flower, totalPoints)
+          const stage = getFlowerStage(flower, flowerWater)
+          const isWatering = wateringFlowers.has(flowerId)
+          const hasEnoughWater = currentWater >= 10
 
           return (
             <motion.div
@@ -178,16 +252,12 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            if (currentWater >= 10) {
-                              onWaterFlower(flowerId, 10)
-                            } else {
-                              console.log(`Không đủ nước để tưới! Còn ${currentWater} nước`)
-                            }
+                            handleWaterClick(flowerId)
                           }}
-                          disabled={currentWater < 10}
+                          disabled={!hasEnoughWater || isWatering}
                           className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-3 py-1 rounded-lg text-sm font-semibold transition flex items-center gap-1"
                         >
-                          💧 Tưới 10
+                          {isWatering ? '⏳ Đang tưới...' : '💧 Tưới 10'}
                         </button>
                       )}
                     </div>
@@ -211,7 +281,7 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <span>💎 Giá: {flower.price} xu</span>
                     <span>•</span>
-                    <span>💧 Nước hiện tại: {totalPoints}</span>
+                    <span>💧 Nước hoa: {flowerWater}</span>
                   </div>
                 </div>
               </div>
