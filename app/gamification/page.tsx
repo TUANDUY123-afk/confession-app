@@ -10,6 +10,7 @@ import FloatingHearts from "@/components/floating-hearts"
 
 export default function GamificationPage() {
   const [totalPoints, setTotalPoints] = useState(0)
+  const [showTestButton, setShowTestButton] = useState(false)
 
   useEffect(() => {
     fetchPoints()
@@ -22,6 +23,25 @@ export default function GamificationPage() {
       setTotalPoints(data.total_points || 0)
     } catch (err) {
       console.error("Error fetching points:", err)
+    }
+  }
+
+  const handleAddTestPoints = async (points: number) => {
+    try {
+      await fetch("/api/gamification/points", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          activity_type: "test",
+          points: points,
+          description: `Test: Thêm ${points} điểm`,
+        }),
+      })
+      fetchPoints() // Refresh points display
+      alert(`✅ Đã thêm ${points} điểm!`)
+    } catch (err) {
+      console.error("Error adding points:", err)
+      alert("Lỗi khi thêm điểm 😢")
     }
   }
 
@@ -40,9 +60,32 @@ export default function GamificationPage() {
           <h1 className="text-3xl font-bold text-pink-600 mb-2">
             🎮 Hệ Thống Gamification
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-600 mb-4">
             Kiếm điểm, phát triển cây tình yêu và mở khóa thành tích!
           </p>
+          
+          {/* Test Buttons */}
+          <div className="flex gap-2 justify-center flex-wrap">
+            <button
+              onClick={() => handleAddTestPoints(10)}
+              className="bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-green-600 transition font-semibold"
+            >
+              +10 Điểm
+            </button>
+            <button
+              onClick={() => handleAddTestPoints(50)}
+              className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600 transition font-semibold"
+            >
+              +50 Điểm
+            </button>
+            <button
+              onClick={() => handleAddTestPoints(100)}
+              className="bg-purple-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-purple-600 transition font-semibold"
+            >
+              +100 Điểm
+            </button>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">🧪 Test buttons</p>
         </div>
 
         {/* Love Points */}
