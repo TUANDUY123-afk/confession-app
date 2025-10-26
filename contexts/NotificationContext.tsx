@@ -1,0 +1,228 @@
+"use client"
+
+import type React from "react"
+import { createContext, useContext, useState, useCallback, useEffect } from "react"
+import { getCurrentUser } from "@/utils/user"
+
+export interface Notification {
+  id: string
+  type: "photo" | "comment" | "like" | "diary" | "event"
+  message: string
+  author?: string
+  target?: string
+  link?: string
+  timestamp: string
+  read: boolean
+}
+
+interface NotificationContextType {
+  notifications: Notification[]
+  unreadCount: number
+  addNotification: (notification: Omit<Notification, "id" | "timestamp" | "read">) => void
+  markAsRead: (id: string) => void
+  markAllAsRead: () => void
+  deleteNotification: (id: string) => void
+  deleteAllNotifications: () => void
+}
+
+const NotificationContext = createContext<NotificationContextType | undefined>(undefined)
+
+export function NotificationProvider({ children }: { children: React.ReactNode }) {
+  const [notifications, setNotifications] = useState<Notification[]>([])
+  const [user, setUser] = useState<string | null>(null)
+
+  // 🩵 Lấy thông báo
+  const fetchNotifications = useCallback(async (username: string) => {
+    if (!username) return
+    try {
+      const res = await fetch(`/api/notifications?user=${encodeURIComponent(username)}`)
+      const data = await res.json()
+      const list = Array.isArray(data.notifications) ? data.notifications : []
+
+      console.log("Fetched notifications:", list.length)
+      console.log("Checking read status for user:", username)
+
+      // Check read status based on read_by array
+      const notificationsWithReadStatus = list.map((n: any) => {
+        const readByArray = n.read_by || []
+        const isRead = readByArray.includes(username)
+        
+        console.log(`Notification ${n.id}: link="${n.link}"`, `read_by=${JSON.stringify(readByArray)}, isRead=${isRead}`)
+        
+        return {
+          id: n.id,
+          type: n.type || "event",
+          message: n.message,
+          author: n.author,
+          target: n.target,
+          link: n.link || undefined,
+          timestamp: n.timestamp || n.created_at,
+          read: isRead,
+        }
+      })
+      
+      setNotifications(notificationsWithReadStatus)
+    } catch (err) {
+      console.error("fetchNotifications error:", err)
+    }
+  }, [])
+
+  // 🩵 Lấy user hiện tại & fetch lần đầu
+  useEffect(() => {
+    const init = async () => {
+      const u = await getCurrentUser()
+      if (u?.name) {
+        setUser(u.name)
+        await fetchNotifications(u.name)
+      }
+    }
+    init()
+  }, [fetchNotifications])
+
+  // 🩵 Cập nhật mỗi 10s
+  useEffect(() => {
+    if (!user) return
+    const interval = setInterval(() => fetchNotifications(user), 10000)
+    return () => clearInterval(interval)
+  }, [user, fetchNotifications])
+
+  // 📨 Thêm thông báo mới
+  const addNotification = useCallback(async (notification: Omit<Notification, "id" | "timestamp" | "read">) => {
+    const u = await getCurrentUser()
+    const authorName = u?.name || "Ẩn danh"
+
+    const newNotification: Notification = {
+      ...notification,
+      author: authorName,
+      id: crypto.randomUUID(),
+      timestamp: new Date().toISOString(),
+      read: false,
+    }
+
+    setNotifications((prev) => [newNotification, ...prev])
+
+    try {
+      console.log("Adding notification with link:", newNotification.link)
+      await fetch("/api/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newNotification),
+      })
+    } catch (err) {
+      console.error("addNotification error:", err)
+    }
+  }, [])
+
+  // ✅ Đánh dấu 1 thông báo đã đọc
+  const markAsRead = useCallback(async (id: string) => {
+    try {
+      const currentUser = await getCurrentUser()
+      const username = currentUser?.name || "Ẩn danh"
+
+      console.log("Marking as read:", id, "for user:", username)
+
+      // Update local state immediately for better UX
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)))
+
+      const response = await fetch(`/api/notifications/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ read_by: [username] }),
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error("Failed to mark as read in API:", response.status, errorText)
+        // Revert local state if API fails
+        setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)))
+      } else {
+        const result = await response.json()
+        console.log("Successfully marked as read:", result)
+      }
+    } catch (err) {
+      console.error("markAsRead error:", err)
+      // Revert local state on error
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: false } : n)))
+    }
+  }, [])
+
+  // ✅ Đánh dấu tất cả đã đọc
+  const markAllAsRead = useCallback(async () => {
+    try {
+      const currentUser = await getCurrentUser()
+      const username = currentUser?.name || "Ẩn danh"
+
+      console.log("Marking all as read for user:", username)
+
+      // Update local state immediately
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
+
+      // Update API
+      const response = await fetch("/api/notifications/mark-all-read", { 
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username })
+      })
+
+      if (!response.ok) {
+        console.error("Failed to mark all as read")
+      } else {
+        console.log("Successfully marked all as read")
+      }
+    } catch (err) {
+      console.error("markAllAsRead error:", err)
+    }
+  }, [])
+
+  // 🗑 Xóa 1 thông báo
+  const deleteNotification = useCallback(async (id: string) => {
+    setNotifications((prev) => prev.filter((n) => n.id !== id))
+    try {
+      await fetch(`/api/notifications/${id}`, { method: "DELETE" })
+    } catch (err) {
+      console.error("deleteNotification error:", err)
+    }
+  }, [])
+
+  // 🧹 Xóa tất cả
+  const deleteAllNotifications = useCallback(async () => {
+    try {
+      const response = await fetch("/api/notifications/all", { method: "DELETE" })
+      
+      if (response.ok) {
+        // Only clear local state if API call succeeds
+        setNotifications([])
+      } else {
+        console.error("Failed to delete all notifications")
+        const error = await response.text()
+        console.error("Error:", error)
+      }
+    } catch (err) {
+      console.error("deleteAllNotifications error:", err)
+    }
+  }, [])
+
+  const unreadCount = notifications.filter((n) => !n.read).length
+
+  return (
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        addNotification,
+        markAsRead,
+        markAllAsRead,
+        deleteNotification,
+        deleteAllNotifications,
+      }}
+    >
+      {children}
+    </NotificationContext.Provider>
+  )
+}
+
+export function useNotifications() {
+  const ctx = useContext(NotificationContext)
+  if (!ctx) throw new Error("useNotifications must be used within NotificationProvider")
+  return ctx
+}

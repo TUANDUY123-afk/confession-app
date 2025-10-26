@@ -1,0 +1,53 @@
+===========================================
+✅ ĐÃ HOÀN THÀNH
+===========================================
+✓ Cài đặt dependencies
+✓ Tạo file .env.local với SERVICE_ROLE_KEY
+
+===========================================
+📋 CÁC BƯỚC TIẾP THEO
+===========================================
+
+BƯỚC 1: Tạo Database Tables
+-----------------------------------
+1. Mở file: scripts/04-complete-schema.sql
+2. Copy TOÀN BỘ nội dung trong file
+3. Vào Supabase Dashboard > SQL Editor
+4. Click "New Query"
+5. Paste SQL đã copy vào
+6. Click "Run" (hoặc Ctrl+Enter)
+7. Kiểm tra kết quả thành công
+
+URL SQL Editor:
+https://supabase.com/dashboard/project/tbfvxykfxzvmjqinmpiw/sql/new
+
+BƯỚC 2: Tạo Storage Bucket
+-----------------------------------
+1. Vào Supabase Dashboard > Storage
+2. Click "Create a new bucket"
+3. Nhập tên: photos
+4. BẬT toggle "Public bucket"
+5. Click "Create bucket"
+
+URL Storage:
+https://supabase.com/dashboard/project/tbfvxykfxzvmjqinmpiw/storage/buckets
+
+BƯỚC 3: Chạy Ứng Dụng
+-----------------------------------
+Chạy lệnh trong terminal:
+npm run dev
+
+Sau đó mở trình duyệt:
+http://localhost:3000
+
+===========================================
+💡 LƯU Ý
+===========================================
+- Không bỏ qua bước tạo tables và bucket
+- Nếu gặp lỗi khi chạy app, gửi thông báo lỗi
+- App sẽ tự động hỏi tên người dùng lần đầu
+
+===========================================
+🚀 SẴN SÀNG CHẠY!
+===========================================
+

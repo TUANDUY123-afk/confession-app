@@ -1,0 +1,31 @@
+⚠️ QUAN TRỌNG - ĐỌC KỸ HƯỚNG DẪN NÀY! ⚠️
+
+BƯỚC 1: CUỘN XUỐNG TRANG
+----------------------------------------
+Trong trang Supabase bạn đang xem, HÃY CUỘN XUỐNG DƯỚI
+để tìm section "Project API keys"
+
+BƯỚC 2: TÌM SERVICE_ROLE KEY
+----------------------------------------
+Trong section "Project API keys", bạn sẽ thấy 2 keys:
+
+1. "anon" (public) - BẠN ĐÃ CÓ RỒI
+2. "service_role" (secret) - LẤY KEY NÀY! 
+
+BƯỚC 3: REVEAL VÀ COPY KEY
+----------------------------------------
+1. Tìm key "service_role"
+2. Click nút "Reveal" bên cạnh
+3. Key sẽ hiện ra (rất dài, bắt đầu bằng eyJ...)
+4. Copy TOÀN BỘ key đó
+
+BƯỚC 4: DÁN VÀO FILE .env.local
+----------------------------------------
+1. Mở file .env.local (đã mở trong Notepad)
+2. Tìm dòng: SUPABASE_SERVICE_ROLE_KEY=NHẬP_SERVICE_ROLE_KEY_Ở_ĐÂY
+3. Thay thế NHẬP_SERVICE_ROLE_KEY_Ở_ĐÂY bằng key bạn vừa copy
+4. Lưu file (Ctrl+S)
+5. Đóng Notepad
+
+Sau đó chạy: npm run dev
+
