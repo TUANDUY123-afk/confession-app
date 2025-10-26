@@ -74,8 +74,8 @@ const getDifficulty = (price: number) => {
 
 export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, onWaterFlower, currentWater }: MyFlowersProps) {
   const [flowerWaterData, setFlowerWaterData] = useState<{ [key: string]: number }>({})
-  const [wateringFlowers, setWateringFlowers] = useState<Set<string>>(new Set())
-  const [waterDebounce, setWaterDebounce] = useState<{ [key: string]: NodeJS.Timeout }>({})
+  const [pendingSync, setPendingSync] = useState<{ [key: string]: number }>({})
+  const [syncTimeouts, setSyncTimeouts] = useState<{ [key: string]: NodeJS.Timeout }>({})
 
   // Fetch flower water data
   useEffect(() => {
@@ -100,48 +100,53 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
   }, [ownedFlowers, totalPoints])
 
   const handleWaterClick = (flowerId: string) => {
-    // Check if already watering
-    if (wateringFlowers.has(flowerId)) {
+    // Check if has enough water
+    if (currentWater < 10) {
       return
     }
 
-    // Check debounce
-    if (waterDebounce[flowerId]) {
-      clearTimeout(waterDebounce[flowerId])
+    // Update UI immediately
+    setFlowerWaterData(prev => ({
+      ...prev,
+      [flowerId]: (prev[flowerId] || 0) + 10
+    }))
+
+    // Track pending sync
+    setPendingSync(prev => ({
+      ...prev,
+      [flowerId]: (prev[flowerId] || 0) + 10
+    }))
+
+    // Clear existing timeout for this flower
+    if (syncTimeouts[flowerId]) {
+      clearTimeout(syncTimeouts[flowerId])
     }
 
-    // Set debounce
-    const timeout = setTimeout(() => {
-      setWateringFlowers(prev => new Set([...prev, flowerId]))
+    // Set new timeout to sync after user stops clicking
+    const timeout = setTimeout(async () => {
+      const waterToAdd = pendingSync[flowerId] || 0
       
-      if (onWaterFlower) {
-        onWaterFlower(flowerId, 10)
+      if (waterToAdd > 0 && onWaterFlower) {
+        // Call API to sync
+        onWaterFlower(flowerId, waterToAdd)
         
-        // Update local state immediately for smooth UI
-        setFlowerWaterData(prev => ({
-          ...prev,
-          [flowerId]: (prev[flowerId] || 0) + 10
-        }))
-        
-        // Remove from watering set after a short delay
-        setTimeout(() => {
-          setWateringFlowers(prev => {
-            const newSet = new Set(prev)
-            newSet.delete(flowerId)
-            return newSet
-          })
-        }, 500)
+        // Clear pending sync
+        setPendingSync(prev => {
+          const newPending = { ...prev }
+          delete newPending[flowerId]
+          return newPending
+        })
       }
-      
-      // Clear debounce
-      setWaterDebounce(prev => {
-        const newDebounce = { ...prev }
-        delete newDebounce[flowerId]
-        return newDebounce
-      })
-    }, 300)
 
-    setWaterDebounce(prev => ({ ...prev, [flowerId]: timeout }))
+      // Clear timeout
+      setSyncTimeouts(prev => {
+        const newTimeouts = { ...prev }
+        delete newTimeouts[flowerId]
+        return newTimeouts
+      })
+    }, 800) // Wait 800ms after last click
+
+    setSyncTimeouts(prev => ({ ...prev, [flowerId]: timeout }))
   }
 
   const getFlowerStage = (flower: Flower, points: number) => {
@@ -215,8 +220,8 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
           const flowerWater = flowerWaterData[flowerId] || 0
           const difficulty = getDifficulty(flower.price)
           const stage = getFlowerStage(flower, flowerWater)
-          const isWatering = wateringFlowers.has(flowerId)
           const hasEnoughWater = currentWater >= 10
+          const hasPendingSync = (pendingSync[flowerId] || 0) > 0
 
           return (
             <motion.div
@@ -248,16 +253,16 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
                       <span className={`text-xs font-semibold px-2 py-1 rounded-full bg-green-100 ${difficulty.color}`}>
                         {difficulty.level}
                       </span>
-                      {onWaterFlower && (
+                                             {onWaterFlower && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
                             handleWaterClick(flowerId)
                           }}
-                          disabled={!hasEnoughWater || isWatering}
+                          disabled={!hasEnoughWater}
                           className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-3 py-1 rounded-lg text-sm font-semibold transition flex items-center gap-1"
                         >
-                          {isWatering ? '⏳ Đang tưới...' : '💧 Tưới 10'}
+                          {hasPendingSync ? '⏳ Đang đồng bộ...' : '💧 Tưới 10'}
                         </button>
                       )}
                     </div>
