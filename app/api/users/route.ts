@@ -2,10 +2,12 @@ import { NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
 // ⚙️ Tạo Supabase client (chạy server-side)
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+}
 
 // 🧍‍♂️ POST: thêm người dùng mới (nếu chưa tồn tại)
 export async function POST(req: Request) {
@@ -18,6 +20,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Thiếu tên người dùng" }, { status: 400 })
     }
 
+    const supabase = getSupabase()
+    
     // Kiểm tra người dùng đã tồn tại chưa
     const { data: existing } = await supabase
       .from("users")
@@ -51,6 +55,7 @@ export async function POST(req: Request) {
 export async function GET() {
   try {
     console.log("📡 [Người dùng] Đang tải danh sách người dùng...")
+    const supabase = getSupabase()
     const { data, error } = await supabase
       .from("users")
       .select("*")
