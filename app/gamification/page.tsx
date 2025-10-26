@@ -21,8 +21,9 @@ export default function GamificationPage() {
   const [showFlowerDetail, setShowFlowerDetail] = useState(false)
   const [selectedFlowerDetail, setSelectedFlowerDetail] = useState<string | null>(null)
   const [claimedStages, setClaimedStages] = useState<number[]>([])
+  const [showClaimPopup, setShowClaimPopup] = useState(false)
 
-  const handleClaimReward = async (coins: number) => {
+  const handleClaimReward = async (coins: number, stageIndex: number) => {
     try {
       await fetch("/api/gamification/points", {
         method: "POST",
@@ -31,19 +32,63 @@ export default function GamificationPage() {
           activity_type: "claim_flower_stage_reward",
           points: 0,
           coins: coins,
-          description: `Nhận thưởng hoa`,
+          description: `Nhận thưởng giai đoạn ${stageIndex}`,
         }),
       })
       
       // Update claimed stages
-      const currentStage = getCurrentStage(totalPoints)
-      setClaimedStages(prev => [...prev, currentStage])
+      setClaimedStages(prev => [...prev, stageIndex])
       setRefreshKey(prev => prev + 1)
       alert(`✅ Đã nhận ${coins} xu! 🎉`)
     } catch (err) {
       console.error("Error claiming reward:", err)
       alert(`Lỗi khi nhận thưởng 😢`)
     }
+  }
+
+  const getAllAvailableClaims = () => {
+    const claims: Array<{ flowerId: string, flowerName: string, stageIndex: number, coins: number, currentFlowerPrice: number }> = []
+    
+    ownedFlowers.forEach(flowerId => {
+      const flowerPrice = getFlowerPrice(flowerId)
+      const flowerNames: { [key: string]: string } = {
+        rose: "Hoa Hồng",
+        tulip: "Hoa Tulip",
+        sunflower: "Hoa Hướng Dương",
+        jasmine: "Hoa Nhài",
+        lavender: "Hoa Oải Hương",
+        cherry: "Hoa Anh Đào",
+      }
+      
+      let thresholds: number[]
+      let rewards: number[]
+      
+      if (flowerPrice >= 200) {
+        thresholds = [0, 300, 600, 1000]
+        rewards = [50, 150, 400]
+      } else if (flowerPrice >= 150) {
+        thresholds = [0, 200, 500, 800]
+        rewards = [30, 100, 250]
+      } else {
+        thresholds = [0, 100, 200, 500]
+        rewards = [20, 60, 150]
+      }
+      
+      // Check each stage
+      for (let i = 1; i <= 3; i++) {
+        if (totalPoints >= thresholds[i] && !claimedStages.includes(i)) {
+          claims.push({
+            flowerId,
+            flowerName: flowerNames[flowerId] || flowerId,
+            stageIndex: i,
+            coins: rewards[i - 1],
+            currentFlowerPrice: flowerPrice
+          })
+        }
+      }
+    })
+    
+    return claims
   }
 
   const getCurrentStage = (points: number) => {
@@ -256,6 +301,18 @@ export default function GamificationPage() {
           />
         </div>
 
+        {/* Claim Coins Button - Always visible when has flowers */}
+        {ownedFlowers.length > 0 && (
+          <div className="mb-6">
+            <button
+              onClick={() => setShowClaimPopup(true)}
+              className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white py-4 rounded-2xl shadow-lg hover:from-yellow-500 hover:to-orange-600 transition-all font-bold text-lg flex items-center justify-center gap-2 animate-pulse"
+            >
+              🎁 Nhận Xu
+            </button>
+          </div>
+        )}
+
 
 
         {/* Open Shop Button */}
@@ -333,14 +390,77 @@ export default function GamificationPage() {
                     currentFlower={selectedFlowerDetail} 
                   />
                   
-                  {/* Flower Progress */}
-                  <FlowerProgress 
-                    totalPoints={totalPoints}
-                    flowerPrice={getFlowerPrice(selectedFlowerDetail)}
-                    currentStage={0}
-                    onClaimReward={handleClaimReward}
-                    claimedStages={claimedStages}
-                  />
+                                     {/* Flower Progress */}
+                   <FlowerProgress 
+                     totalPoints={totalPoints}
+                     flowerPrice={getFlowerPrice(selectedFlowerDetail)}
+                     currentStage={0}
+                     onClaimReward={(coins) => handleClaimReward(coins, getCurrentStage(totalPoints))}
+                     claimedStages={claimedStages}
+                   />
+                </div>
+              </div>
+            </div>
+          </div>
+                 )}
+
+        {/* Claim Coins Popup */}
+        {showClaimPopup && (
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowClaimPopup(false)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-2xl font-bold text-yellow-600 flex items-center gap-2">
+                    🎁 Nhận Xu Thưởng
+                  </h2>
+                  <button
+                    onClick={() => setShowClaimPopup(false)}
+                    className="text-gray-500 hover:text-gray-700 transition text-2xl"
+                  >
+                    ×
+                  </button>
+                </div>
+                
+                <div className="space-y-4">
+                  {getAllAvailableClaims().length > 0 ? (
+                    getAllAvailableClaims().map((claim, index) => (
+                      <div key={index} className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-xl p-4 border border-yellow-200">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-lg font-bold text-gray-800">{claim.flowerName}</div>
+                            <div className="text-sm text-gray-600">Giai đoạn {claim.stageIndex}: {claim.stageIndex === 1 ? 'Phát Triển' : claim.stageIndex === 2 ? 'Chớm Nở' : 'Nở Rộ'}</div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <div className="text-2xl font-bold text-yellow-600 flex items-center gap-1">
+                              <span>🪙</span>
+                              {claim.coins}
+                            </div>
+                            <button
+                              onClick={() => {
+                                handleClaimReward(claim.coins, claim.stageIndex)
+                                setShowClaimPopup(false)
+                              }}
+                              className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-4 py-2 rounded-lg font-bold hover:from-yellow-500 hover:to-orange-600 transition-all"
+                            >
+                              Nhận
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <div className="text-4xl mb-2">🎯</div>
+                      <div className="font-semibold">Chưa có xu nào để nhận</div>
+                      <div className="text-sm mt-2">Tiếp tục kiếm điểm để nhận xu thưởng!</div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
