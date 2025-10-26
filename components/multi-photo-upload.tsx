@@ -51,8 +51,8 @@ export default function MultiPhotoUpload({
           let processedFile = file
           let preview = ""
           
-          // Compress and resize images for better upload performance
-          if (file.size > 2 * 1024 * 1024) { // If file > 2MB, compress it
+          // Always compress and resize images for better upload performance
+          if (file.size > 500 * 1024) { // If file > 500KB, compress it
             console.log("[Compress] Large file detected, compressing:", file.name, file.size)
             
             try {
@@ -61,10 +61,10 @@ export default function MultiPhotoUpload({
               
               processedFile = await new Promise<File>((resolve, reject) => {
                 img.onload = () => {
-                  // Calculate new dimensions (max 2048px on longest side)
+                  // Calculate new dimensions (max 1200px on longest side for smaller file size)
                   let width = img.width
                   let height = img.height
-                  const maxDimension = 2048
+                  const maxDimension = 1200
                   
                   if (width > maxDimension || height > maxDimension) {
                     const scale = Math.min(maxDimension / width, maxDimension / height)
@@ -84,14 +84,14 @@ export default function MultiPhotoUpload({
                     canvas.toBlob((blob) => {
                       if (blob) {
                         const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" })
-                        console.log("[Compress] Original:", file.size, "Compressed:", blob.size)
+                        console.log("[Compress] Original:", file.size, "Compressed:", blob.size, "Reduction:", ((1 - blob.size / file.size) * 100).toFixed(1) + "%")
                         URL.revokeObjectURL(imageObjectUrl)
                         resolve(compressedFile)
                       } else {
                         URL.revokeObjectURL(imageObjectUrl)
                         reject(new Error("Blob conversion failed"))
                       }
-                    }, "image/jpeg", 0.85) // 85% quality
+                    }, "image/jpeg", 0.75) // 75% quality for much smaller file size
                   } else {
                     URL.revokeObjectURL(imageObjectUrl)
                     reject(new Error("Canvas context failed"))
