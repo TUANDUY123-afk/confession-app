@@ -51,10 +51,66 @@ export default function MultiPhotoUpload({
           let processedFile = file
           let preview = ""
           
-          // Don't convert HEIC - just upload original file
-          // Supabase will store it as-is, browser compatibility will be handled by server
-          if (file.type === "image/heic" || file.type === "image/heif" || file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif")) {
-            console.log("[HEIC] Detected HEIC file, will upload original:", file.name, file.size)
+          // Compress and resize images for better upload performance
+          if (file.size > 2 * 1024 * 1024) { // If file > 2MB, compress it
+            console.log("[Compress] Large file detected, compressing:", file.name, file.size)
+            
+            try {
+              const img = new Image()
+              const imageObjectUrl = URL.createObjectURL(file)
+              
+              processedFile = await new Promise<File>((resolve, reject) => {
+                img.onload = () => {
+                  // Calculate new dimensions (max 2048px on longest side)
+                  let width = img.width
+                  let height = img.height
+                  const maxDimension = 2048
+                  
+                  if (width > maxDimension || height > maxDimension) {
+                    const scale = Math.min(maxDimension / width, maxDimension / height)
+                    width = Math.floor(width * scale)
+                    height = Math.floor(height * scale)
+                    console.log("[Compress] Resizing to:", width, "x", height)
+                  }
+                  
+                  const canvas = document.createElement("canvas")
+                  canvas.width = width
+                  canvas.height = height
+                  const ctx = canvas.getContext("2d")
+                  
+                  if (ctx) {
+                    ctx.drawImage(img, 0, 0, width, height)
+                    
+                    canvas.toBlob((blob) => {
+                      if (blob) {
+                        const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" })
+                        console.log("[Compress] Original:", file.size, "Compressed:", blob.size)
+                        URL.revokeObjectURL(imageObjectUrl)
+                        resolve(compressedFile)
+                      } else {
+                        URL.revokeObjectURL(imageObjectUrl)
+                        reject(new Error("Blob conversion failed"))
+                      }
+                    }, "image/jpeg", 0.85) // 85% quality
+                  } else {
+                    URL.revokeObjectURL(imageObjectUrl)
+                    reject(new Error("Canvas context failed"))
+                  }
+                }
+                
+                img.onerror = () => {
+                  URL.revokeObjectURL(imageObjectUrl)
+                  reject(new Error("Image load failed"))
+                }
+                
+                img.src = imageObjectUrl
+              })
+              
+              console.log("[Compress] File compressed successfully:", processedFile.name)
+            } catch (compressError) {
+              console.error("[Compress] Compression failed, using original:", compressError)
+              // Use original file if compression fails
+            }
           }
           
           // Create preview
