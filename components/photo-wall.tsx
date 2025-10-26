@@ -162,15 +162,7 @@ export default function PhotoWall() {
       ...prev,
     ])
 
-    // Send notification
-    const currentUser = localStorage.getItem("lovable_user") || "Ẩn danh"
-    await addNotification({
-      type: "photo",
-      message: `${currentUser} đã đăng ảnh mới "${title}" 📸`,
-      author: currentUser,
-      target: "Tất cả",
-      link: "/photo-wall"
-    })
+    // Notification is sent from multi-photo-upload.tsx, so don't send here to avoid duplicates
   }, [addNotification])
 
   // Memoize sorted photos to avoid recalculation
