@@ -8,6 +8,7 @@ import LoveTree from "@/components/love-tree"
 import AchievementsDisplay from "@/components/achievements-display"
 import FloatingHearts from "@/components/floating-hearts"
 import FlowerShop from "@/components/flower-shop"
+import MyFlowers from "@/components/my-flowers"
 
 export default function GamificationPage() {
   const [totalPoints, setTotalPoints] = useState(0)
@@ -108,6 +109,10 @@ export default function GamificationPage() {
     }
   }
 
+  const handleSelectFlower = (flowerId: string) => {
+    setCurrentFlower(flowerId)
+  }
+
   return (
     <main className="relative min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-blue-50 py-12 overflow-hidden">
       {/* 💞 Hiệu ứng tim bay */}
@@ -166,6 +171,15 @@ export default function GamificationPage() {
         {/* Love Points */}
         <div className="mb-6" key={`points-${refreshKey}`}>
           <LovePointsDisplay />
+        </div>
+
+        {/* My Flowers */}
+        <div className="mb-6">
+          <MyFlowers 
+            ownedFlowers={ownedFlowers}
+            totalPoints={totalPoints}
+            onSelectFlower={handleSelectFlower}
+          />
         </div>
 
         {/* Flower Shop */}
