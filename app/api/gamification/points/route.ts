@@ -26,6 +26,8 @@ export async function GET() {
         longest_streak: 0,
         last_activity_date: null,
         coins: 0,
+        owned_flowers: [],
+        claimed_stages: [],
       })
     }
     
@@ -40,7 +42,7 @@ export async function POST(request: Request) {
   try {
     const supabase = getSupabaseClient()
     const body = await request.json()
-    const { activity_type, points, description, coins } = body
+    const { activity_type, points, description, coins, claimed_stage, owned_flower } = body
     
     if (activity_type === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
@@ -81,6 +83,20 @@ export async function POST(request: Request) {
       // else: streak broken, reset to 1
     }
     
+    // Handle arrays
+    let ownedFlowers = (currentPoints as any)?.owned_flowers || []
+    let claimedStages = (currentPoints as any)?.claimed_stages || []
+    
+    // Add claimed stage
+    if (claimed_stage !== undefined && !claimedStages.includes(claimed_stage)) {
+      claimedStages.push(claimed_stage)
+    }
+    
+    // Add owned flower
+    if (owned_flower !== undefined && !ownedFlowers.includes(owned_flower)) {
+      ownedFlowers.push(owned_flower)
+    }
+    
     // Update or insert love points
     let data, error
     
@@ -91,6 +107,8 @@ export async function POST(request: Request) {
         longest_streak: longestStreak,
         last_activity_date: today,
         updated_at: new Date().toISOString(),
+        owned_flowers: ownedFlowers,
+        claimed_stages: claimedStages,
       }
       
       // Update points if provided
@@ -119,6 +137,8 @@ export async function POST(request: Request) {
         longest_streak: longestStreak,
         last_activity_date: today,
         updated_at: new Date().toISOString(),
+        owned_flowers: ownedFlowers,
+        claimed_stages: claimedStages,
       }
       
       if (points !== undefined) {

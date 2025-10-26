@@ -32,15 +32,10 @@ export default function GamificationPage() {
           activity_type: "claim_flower_stage_reward",
           points: 0,
           coins: coins,
+          claimed_stage: stageIndex,
           description: `Nhận thưởng giai đoạn ${stageIndex}${flowerId ? ` - ${flowerId}` : ''}`,
         }),
       })
-      
-      // Update claimed stages
-      setClaimedStages(prev => [...prev, stageIndex])
-      
-      // Update local coins state immediately for better UX
-      setTotalCoins(prev => prev + coins)
       
       // Refresh data from server
       setRefreshKey(prev => prev + 1)
@@ -127,6 +122,8 @@ export default function GamificationPage() {
       const data = await res.json()
       setTotalPoints(data.total_points || 0)
       setTotalCoins(data.coins || 0)
+      setOwnedFlowers(data.owned_flowers || [])
+      setClaimedStages(data.claimed_stages || [])
     } catch (err) {
       console.error("Error fetching points:", err)
     }
@@ -207,13 +204,25 @@ export default function GamificationPage() {
             activity_type: "buy_flower_with_coins",
             points: 0,
             coins: -price,
+            owned_flower: flowerId,
             description: `Mua hoa bằng xu: ${flowerId}`,
+          }),
+        })
+      } else {
+        // Add flower for free
+        await fetch("/api/gamification/points", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            activity_type: "claim_free_flower",
+            points: 0,
+            coins: 0,
+            owned_flower: flowerId,
+            description: `Nhận hoa miễn phí: ${flowerId}`,
           }),
         })
       }
       
-      // Add to owned flowers
-      setOwnedFlowers(prev => [...prev, flowerId])
       setCurrentFlower(flowerId)
       setRefreshKey(prev => prev + 1)
       setShowShop(false) // Close shop after purchase
