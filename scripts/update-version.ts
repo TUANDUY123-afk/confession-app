@@ -27,6 +27,7 @@ function incrementVersion(version: string): string {
 
 function main() {
   const packageJsonPath = join(process.cwd(), 'package.json')
+  const pageTsxPath = join(process.cwd(), 'app', 'page.tsx')
   
   try {
     // Read package.json
@@ -35,13 +36,21 @@ function main() {
     const oldVersion = packageJson.version
     const newVersion = incrementVersion(oldVersion)
     
-    // Update version
+    // Update version in package.json
     packageJson.version = newVersion
-    
-    // Write back to file
     writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n')
     
-    console.log(`✅ Version updated: ${oldVersion} → ${newVersion}`)
+    console.log(`✅ Version updated in package.json: ${oldVersion} → ${newVersion}`)
+    
+    // Update version in app/page.tsx
+    const pageTsxContent = readFileSync(pageTsxPath, 'utf-8')
+    const updatedContent = pageTsxContent.replace(
+      /const APP_VERSION = "v\d+\.\d+\.\d+"/,
+      `const APP_VERSION = "v${newVersion}"`
+    )
+    writeFileSync(pageTsxPath, updatedContent, 'utf-8')
+    
+    console.log(`✅ Version updated in app/page.tsx: v${oldVersion} → v${newVersion}`)
     
     // Return new version for Vercel
     process.stdout.write(newVersion)
