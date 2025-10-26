@@ -7,6 +7,8 @@ interface FlowerProgressProps {
   totalPoints: number
   flowerPrice: number
   currentStage: number
+  onClaimReward?: (coins: number) => void
+  claimedStages?: number[]
 }
 
 const getDifficulty = (price: number) => {
@@ -27,7 +29,7 @@ const getDifficulty = (price: number) => {
   }
 }
 
-export default function FlowerProgress({ totalPoints, flowerPrice, currentStage }: FlowerProgressProps) {
+export default function FlowerProgress({ totalPoints, flowerPrice, currentStage, onClaimReward, claimedStages = [] }: FlowerProgressProps) {
   const difficulty = getDifficulty(flowerPrice)
   const thresholds = difficulty.thresholds
   const rewards = difficulty.rewards
@@ -37,22 +39,26 @@ export default function FlowerProgress({ totalPoints, flowerPrice, currentStage 
   let nextThreshold = thresholds[1]
   let stageName = "Mầm Non"
   let reward = 0
+  let stageIndex = 0
 
   if (totalPoints >= thresholds[3]) {
     currentThreshold = thresholds[3]
     nextThreshold = 0 // Max level
     stageName = "Nở Rộ"
     reward = rewards[2]
+    stageIndex = 3
   } else if (totalPoints >= thresholds[2]) {
     currentThreshold = thresholds[2]
     nextThreshold = thresholds[3]
     stageName = "Chớm Nở"
     reward = rewards[1]
+    stageIndex = 2
   } else if (totalPoints >= thresholds[1]) {
     currentThreshold = thresholds[1]
     nextThreshold = thresholds[2]
     stageName = "Phát Triển"
     reward = rewards[0]
+    stageIndex = 1
   }
 
   const progress = nextThreshold > 0 
@@ -60,6 +66,9 @@ export default function FlowerProgress({ totalPoints, flowerPrice, currentStage 
     : 100
 
   const pointsNeeded = nextThreshold > 0 ? nextThreshold - totalPoints : 0
+
+  // Check if can claim reward (reached threshold and not claimed yet)
+  const canClaimReward = totalPoints >= currentThreshold && !claimedStages.includes(stageIndex) && currentThreshold > 0
 
   return (
     <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border border-yellow-200 shadow-md">
@@ -111,12 +120,25 @@ export default function FlowerProgress({ totalPoints, flowerPrice, currentStage 
               <span className="text-2xl">🏆</span>
               <span className="font-semibold text-gray-800">Thưởng xu</span>
             </div>
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-gray-700 mb-3">
               Hoàn thành giai đoạn này để nhận <span className="font-bold text-orange-600">{reward} xu</span>!
             </div>
-            <div className="text-xs text-gray-600 mt-2">
-              💡 Hoa càng khó, thưởng xu càng lớn! Dùng xu để mua hoa đắt hơn! ✨
-            </div>
+            {canClaimReward && onClaimReward ? (
+              <button
+                onClick={() => onClaimReward(reward)}
+                className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white py-2 rounded-lg font-bold text-sm hover:from-yellow-500 hover:to-orange-600 transition-all shadow-lg"
+              >
+                🎁 Nhận {reward} Xu
+              </button>
+            ) : claimedStages.includes(stageIndex) ? (
+              <div className="text-center text-sm font-semibold text-green-600">
+                ✓ Đã nhận thưởng
+              </div>
+            ) : (
+              <div className="text-xs text-gray-600">
+                💡 Hoa càng khó, thưởng xu càng lớn! Dùng xu để mua hoa đắt hơn! ✨
+              </div>
+            )}
           </div>
         )}
 

@@ -20,6 +20,51 @@ export default function GamificationPage() {
   const [showShop, setShowShop] = useState(false)
   const [showFlowerDetail, setShowFlowerDetail] = useState(false)
   const [selectedFlowerDetail, setSelectedFlowerDetail] = useState<string | null>(null)
+  const [claimedStages, setClaimedStages] = useState<number[]>([])
+
+  const handleClaimReward = async (coins: number) => {
+    try {
+      await fetch("/api/gamification/points", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          activity_type: "claim_flower_stage_reward",
+          points: 0,
+          coins: coins,
+          description: `Nhận thưởng hoa`,
+        }),
+      })
+      
+      // Update claimed stages
+      const currentStage = getCurrentStage(totalPoints)
+      setClaimedStages(prev => [...prev, currentStage])
+      setRefreshKey(prev => prev + 1)
+      alert(`✅ Đã nhận ${coins} xu! 🎉`)
+    } catch (err) {
+      console.error("Error claiming reward:", err)
+      alert(`Lỗi khi nhận thưởng 😢`)
+    }
+  }
+
+  const getCurrentStage = (points: number) => {
+    const flowerPrice = selectedFlowerDetail ? getFlowerPrice(selectedFlowerDetail) : 100
+    if (flowerPrice >= 200) {
+      if (points >= 1000) return 3
+      if (points >= 600) return 2
+      if (points >= 300) return 1
+      return 0
+    } else if (flowerPrice >= 150) {
+      if (points >= 800) return 3
+      if (points >= 500) return 2
+      if (points >= 200) return 1
+      return 0
+    } else {
+      if (points >= 500) return 3
+      if (points >= 200) return 2
+      if (points >= 100) return 1
+      return 0
+    }
+  }
 
   useEffect(() => {
     fetchPoints()
@@ -211,16 +256,7 @@ export default function GamificationPage() {
           />
         </div>
 
-        {/* Flower Progress & Coins */}
-        {ownedFlowers.length > 0 && (
-          <div className="mb-6">
-            <FlowerProgress 
-              totalPoints={totalPoints}
-              flowerPrice={currentFlower === "cherry" ? 200 : currentFlower === "sunflower" ? 150 : 100}
-              currentStage={0}
-            />
-          </div>
-        )}
+
 
         {/* Open Shop Button */}
         <div className="mb-6">
@@ -302,6 +338,8 @@ export default function GamificationPage() {
                     totalPoints={totalPoints}
                     flowerPrice={getFlowerPrice(selectedFlowerDetail)}
                     currentStage={0}
+                    onClaimReward={handleClaimReward}
+                    claimedStages={claimedStages}
                   />
                 </div>
               </div>
