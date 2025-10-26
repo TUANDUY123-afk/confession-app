@@ -250,55 +250,9 @@ export async function POST(request: Request) {
       }
     }
     
-    // Update points for all owned flowers (only when earning points, not buying flowers)
-    // Skip updating points if this is a purchase (owned_flower is defined and it's new)
-    const isPurchasingNewFlower = owned_flower !== undefined && !((currentPoints as any)?.owned_flowers || []).includes(owned_flower)
-    
-    if (points !== undefined && points > 0 && ownedFlowers.length > 0 && !isPurchasingNewFlower) {
-      console.log("Updating points for owned flowers:", ownedFlowers, "Adding points:", points)
-      for (const flowerId of ownedFlowers) {
-        // Get current flower points
-        const { data: flowerData } = await supabase
-          .from("flower_points")
-          .select("points")
-          .eq("couple_id", COUPLE_ID)
-          .eq("flower_id", flowerId)
-          .maybeSingle()
-        
-        const currentFlowerPoints = (flowerData as any)?.points || 0
-        const newFlowerPoints = currentFlowerPoints + points
-        
-        console.log(`Flower ${flowerId}: ${currentFlowerPoints} + ${points} = ${newFlowerPoints}`)
-        
-        // Update or insert flower points
-        const { data: existing } = await supabase
-          .from("flower_points")
-          .select("*")
-          .eq("couple_id", COUPLE_ID)
-          .eq("flower_id", flowerId)
-          .maybeSingle()
-        
-        if (existing) {
-          await supabase
-            .from("flower_points")
-            .update({
-              points: newFlowerPoints,
-              last_updated: new Date().toISOString(),
-            } as any)
-            .eq("couple_id", COUPLE_ID)
-            .eq("flower_id", flowerId)
-        } else {
-          await supabase
-            .from("flower_points")
-            .insert({
-              couple_id: COUPLE_ID,
-              flower_id: flowerId,
-              points: newFlowerPoints,
-              last_updated: new Date().toISOString(),
-            } as any)
-        }
-      }
-    }
+    // NO AUTOMATIC POINT DISTRIBUTION
+    // Points are now manually distributed to flowers, not automatically
+    // When points are added to a flower, they are deducted from total_points
     
     return NextResponse.json(data)
   } catch (err) {
