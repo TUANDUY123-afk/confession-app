@@ -1,13 +1,9 @@
 name: Auto Version Increment
 
-# DISABLED - Manual trigger only
-# on:
-#   push:
-#     branches:
-#       - main
-
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - main
 
 jobs:
   increment-version:
