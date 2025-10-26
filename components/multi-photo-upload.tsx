@@ -51,9 +51,13 @@ export default function MultiPhotoUpload({
           let processedFile = file
           let preview = ""
           
-          // Always compress and resize images for better upload performance
-          if (file.size > 500 * 1024) { // If file > 500KB, compress it
-            console.log("[Compress] Large file detected, compressing:", file.name, file.size)
+          // Skip HEIC compression completely - they don't work well with browser canvas
+          const isHEIC = file.type === "image/heic" || file.type === "image/heif" || 
+                        file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif")
+          
+          // Only compress non-HEIC files
+          if (!isHEIC && file.size > 500 * 1024) {
+            console.log("[Compress] Large non-HEIC file detected, compressing:", file.name, file.size)
             
             try {
               const img = new Image()
@@ -61,10 +65,10 @@ export default function MultiPhotoUpload({
               
               processedFile = await new Promise<File>((resolve, reject) => {
                 img.onload = () => {
-                  // Calculate new dimensions (max 1200px on longest side for smaller file size)
+                  // Calculate new dimensions (max 2048px on longest side)
                   let width = img.width
                   let height = img.height
-                  const maxDimension = 1200
+                  const maxDimension = 2048
                   
                   if (width > maxDimension || height > maxDimension) {
                     const scale = Math.min(maxDimension / width, maxDimension / height)
@@ -91,7 +95,7 @@ export default function MultiPhotoUpload({
                         URL.revokeObjectURL(imageObjectUrl)
                         reject(new Error("Blob conversion failed"))
                       }
-                    }, "image/jpeg", 0.75) // 75% quality for much smaller file size
+                    }, "image/jpeg", 0.85)
                   } else {
                     URL.revokeObjectURL(imageObjectUrl)
                     reject(new Error("Canvas context failed"))
@@ -109,8 +113,9 @@ export default function MultiPhotoUpload({
               console.log("[Compress] File compressed successfully:", processedFile.name)
             } catch (compressError) {
               console.error("[Compress] Compression failed, using original:", compressError)
-              // Use original file if compression fails
             }
+          } else if (isHEIC) {
+            console.log("[HEIC] Skipping compression for HEIC file, will upload original:", file.name, file.size)
           }
           
           // Create preview
