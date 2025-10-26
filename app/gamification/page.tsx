@@ -132,12 +132,38 @@ export default function GamificationPage() {
     try {
       const res = await fetch("/api/gamification/points")
       const data = await res.json()
-      setTotalPoints(data.total_points || 0)
+      setTotalPoints(data.water || 0) // Change to water
       setTotalCoins(data.coins || 0)
       setOwnedFlowers(data.owned_flowers || [])
       setClaimedStages(data.claimed_stages || [])
     } catch (err) {
       console.error("Error fetching points:", err)
+    }
+  }
+  
+  const handleWaterFlower = async (flowerId: string, waterAmount: number) => {
+    try {
+      const response = await fetch("/api/gamification/flower-points", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          flower_id: flowerId,
+          water_to_add: waterAmount,
+        }),
+      })
+      
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to water flower")
+      }
+      
+      // Refresh all components
+      setRefreshKey(prev => prev + 1)
+      alert(`✅ Đã tưới ${waterAmount} nước cho hoa! 💧`)
+    } catch (err) {
+      console.error("Error watering flower:", err)
+      alert(`Lỗi khi tưới hoa 😢`)
     }
   }
 
@@ -334,6 +360,8 @@ export default function GamificationPage() {
             ownedFlowers={ownedFlowers}
             totalPoints={totalPoints}
             onSelectFlower={handleSelectFlower}
+            onWaterFlower={handleWaterFlower}
+            currentWater={totalPoints}
           />
         </div>
 

@@ -10,7 +10,7 @@ interface LovePointsDisplayProps {
 
 export default function LovePointsDisplay({ refreshKey }: LovePointsDisplayProps) {
   const [pointsData, setPointsData] = useState({
-    total_points: 0,
+    water: 0,
     current_streak: 0,
     longest_streak: 0,
     coins: 0,
@@ -54,16 +54,19 @@ export default function LovePointsDisplay({ refreshKey }: LovePointsDisplayProps
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        {/* Total Points */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-xl p-3 border border-pink-100">
-          <div className="text-xs text-gray-600 mb-1">Tổng điểm</div>
+        {/* Water */}
+        <div className="bg-gradient-to-br from-blue-100 to-cyan-100 rounded-xl p-3 border border-blue-300">
+          <div className="flex items-center gap-1 text-xs text-gray-700 mb-1">
+            <span>💧</span>
+            <span className="font-semibold">Nước</span>
+          </div>
           <motion.div
-            key={pointsData.total_points}
+            key={pointsData.water}
             initial={{ scale: 1.2 }}
             animate={{ scale: 1 }}
-            className="text-2xl font-bold text-pink-600"
+            className="text-2xl font-bold text-blue-600"
           >
-            {pointsData.total_points}
+            {pointsData.water || 0}
           </motion.div>
         </div>
 

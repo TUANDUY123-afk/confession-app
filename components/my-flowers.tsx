@@ -16,6 +16,8 @@ interface MyFlowersProps {
   ownedFlowers: string[]
   totalPoints: number
   onSelectFlower: (flowerId: string) => void
+  onWaterFlower?: (flowerId: string, waterAmount: number) => void
+  currentWater: number
 }
 
 const FLOWERS: { [key: string]: Flower } = {
@@ -70,7 +72,7 @@ const getDifficulty = (price: number) => {
   return { level: "Dễ", thresholds: [0, 100, 200, 500], color: "text-green-600" }
 }
 
-export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower }: MyFlowersProps) {
+export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, onWaterFlower, currentWater }: MyFlowersProps) {
   const getFlowerStage = (flower: Flower, points: number) => {
     const difficulty = getDifficulty(flower.price)
     const thresholds = difficulty.thresholds
@@ -168,9 +170,27 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower }:
                     <h4 className="text-lg font-bold text-gray-800">
                       {flower.name}
                     </h4>
-                    <span className={`text-xs font-semibold px-2 py-1 rounded-full bg-green-100 ${difficulty.color}`}>
-                      {difficulty.level}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-xs font-semibold px-2 py-1 rounded-full bg-green-100 ${difficulty.color}`}>
+                        {difficulty.level}
+                      </span>
+                      {onWaterFlower && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            if (currentWater >= 10) {
+                              onWaterFlower(flowerId, 10)
+                            } else {
+                              alert(`Không đủ nước để tưới! Còn ${currentWater} nước`)
+                            }
+                          }}
+                          disabled={currentWater < 10}
+                          className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-3 py-1 rounded-lg text-sm font-semibold transition flex items-center gap-1"
+                        >
+                          💧 Tưới 10
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   <div className="mb-3">
@@ -189,9 +209,9 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower }:
                   </div>
 
                   <div className="flex items-center gap-2 text-xs text-gray-500">
-                    <span>💎 Giá: {flower.price} điểm</span>
+                    <span>💎 Giá: {flower.price} xu</span>
                     <span>•</span>
-                    <span>📊 Điểm hiện tại: {totalPoints}</span>
+                    <span>💧 Nước hiện tại: {totalPoints}</span>
                   </div>
                 </div>
               </div>
@@ -205,7 +225,7 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower }:
         animate={{ opacity: 1, y: 0 }}
         className="mt-4 text-center text-xs text-gray-600 bg-white/60 rounded-lg p-3"
       >
-        💡 Tip: Hoa càng đắt càng khó phát triển! Kiếm nhiều điểm hơn để nở rộ! 🌸
+        💡 Tip: Tưới nước cho hoa để phát triển! Nước: {currentWater} 💧
       </motion.div>
     </motion.div>
   )
