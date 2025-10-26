@@ -247,35 +247,10 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
               onClick={() => onSelectFlower(flowerId)}
               className="bg-white rounded-xl p-4 border-2 border-green-300 hover:border-green-400 cursor-pointer transition-all hover:shadow-lg"
             >
-              <div className="flex items-end gap-4">
-                {/* Flower Display with Pot */}
-                <div className="relative flex flex-col items-center">
-                  {/* Pot */}
-                  <motion.div
-                    animate={{ 
-                      scale: hasPendingSync ? [1, 1.05, 1] : 1 
-                    }}
-                    transition={{ duration: 0.3 }}
-                    className="relative"
-                  >
-                    <div className="w-20 h-20 mb-1 relative">
-                      {/* Pot Shadow */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-amber-900 to-amber-700 rounded-b-lg rounded-t-[3px] transform translate-y-[2px] blur-sm opacity-30"></div>
-                      
-                      {/* Pot Body */}
-                      <div className="absolute inset-0 bg-gradient-to-b from-amber-400 via-amber-500 to-amber-600 rounded-b-lg rounded-t-[3px] border-2 border-amber-700 shadow-inner">
-                        <div className="absolute top-1 left-1/2 transform -translate-x-1/2 w-12 h-1 bg-amber-300 rounded-full opacity-50"></div>
-                      </div>
-                      
-                      {/* Pot Rim */}
-                      <div className="absolute -top-1 left-1/2 transform -translate-x-1/2 w-20 h-3 bg-gradient-to-b from-amber-300 to-amber-500 rounded-full border-2 border-amber-600 shadow-md"></div>
-                    </div>
-                    
-                    {/* Soil inside pot */}
-                    <div className="absolute bottom-[22px] left-1/2 transform -translate-x-1/2 w-[72px] h-4 bg-gradient-to-b from-amber-800 to-amber-900 rounded-full opacity-80"></div>
-                  </motion.div>
-
-                  {/* Flower Above Pot */}
+              <div className="flex items-center gap-4">
+                {/* Flower Display */}
+                <div className="relative flex items-center justify-center">
+                  {/* Flower */}
                   <motion.div
                     animate={{ 
                       y: [0, -8, 0],
@@ -287,7 +262,7 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
                       rotate: { duration: 3, repeat: Infinity, ease: "easeInOut" },
                       scale: { duration: 0.3 }
                     }}
-                    className="text-6xl relative -mt-2"
+                    className="text-6xl relative"
                   >
                     {stage.emoji}
                     
