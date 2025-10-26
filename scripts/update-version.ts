@@ -1,26 +1,56 @@
-import { readFileSync, writeFileSync } from "fs"
-import { join } from "path"
+import { readFileSync, writeFileSync } from 'fs'
+import { join } from 'path'
 
-// Đọc file page.tsx
-const pagePath = join(process.cwd(), "app", "page.tsx")
-const content = readFileSync(pagePath, "utf-8")
+function incrementVersion(version: string): string {
+  const parts = version.split('.')
+  let major = parseInt(parts[0])
+  let minor = parseInt(parts[1])
+  let patch = parseInt(parts[2])
 
-// Tìm và tăng version
-const versionMatch = content.match(/const APP_VERSION = "(v\d+)"/)
-if (versionMatch) {
-  const currentVersion = versionMatch[1]
-  const versionNumber = parseInt(currentVersion.replace("v", ""))
-  const newVersion = `v${versionNumber + 1}`
+  // Increment patch version
+  patch++
   
-  const updatedContent = content.replace(
-    /const APP_VERSION = "[^"]+"/,
-    `const APP_VERSION = "${newVersion}"`
-  )
+  // If patch exceeds 99, increment minor
+  if (patch > 99) {
+    patch = 0
+    minor++
+  }
   
-  writeFileSync(pagePath, updatedContent, "utf-8")
-  console.log(`Version updated from ${currentVersion} to ${newVersion}`)
-} else {
-  console.log("Could not find APP_VERSION in page.tsx")
+  // If minor exceeds 99, increment major
+  if (minor > 99) {
+    minor = 0
+    major++
+  }
+
+  return `${major}.${minor}.${patch}`
 }
+
+function main() {
+  const packageJsonPath = join(process.cwd(), 'package.json')
+  
+  try {
+    // Read package.json
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf-8'))
+    
+    const oldVersion = packageJson.version
+    const newVersion = incrementVersion(oldVersion)
+    
+    // Update version
+    packageJson.version = newVersion
+    
+    // Write back to file
+    writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n')
+    
+    console.log(`✅ Version updated: ${oldVersion} → ${newVersion}`)
+    
+    // Return new version for Vercel
+    process.stdout.write(newVersion)
+  } catch (error) {
+    console.error('❌ Error updating version:', error)
+    process.exit(1)
+  }
+}
+
+main()
 
 
