@@ -7,6 +7,8 @@ import FloatingHearts from "@/components/floating-hearts"
 import ConfessionMessage from "@/components/confession-message"
 import Link from "next/link"
 
+const APP_VERSION = "v7"
+
 export default function Home() {
   const [showMessage, setShowMessage] = useState(false)
   const [accepted, setAccepted] = useState(false)
@@ -18,6 +20,13 @@ export default function Home() {
       bg-gradient-to-br from-pink-100 via-rose-100 to-purple-100 overflow-hidden 
       text-center px-4 sm:px-6"
     >
+      {/* Version tag */}
+      <div className="absolute top-4 left-4 z-50">
+        <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+          {APP_VERSION}
+        </span>
+      </div>
+
       {/* 💞 Hiệu ứng tim bay */}
       <FloatingHearts />
 
