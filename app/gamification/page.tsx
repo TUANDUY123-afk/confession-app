@@ -20,11 +20,13 @@ export default function GamificationPage() {
   const [showShop, setShowShop] = useState(false)
   const [showFlowerDetail, setShowFlowerDetail] = useState(false)
   const [selectedFlowerDetail, setSelectedFlowerDetail] = useState<string | null>(null)
-  const [claimedStages, setClaimedStages] = useState<number[]>([])
+  const [claimedStages, setClaimedStages] = useState<string[]>([])
   const [showClaimPopup, setShowClaimPopup] = useState(false)
 
   const handleClaimReward = async (coins: number, stageIndex: number, flowerId?: string) => {
     try {
+      const claimId = flowerId ? `${flowerId}_${stageIndex}` : stageIndex.toString()
+      
       await fetch("/api/gamification/points", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -32,7 +34,7 @@ export default function GamificationPage() {
           activity_type: "claim_flower_stage_reward",
           points: 0,
           coins: coins,
-          claimed_stage: stageIndex,
+          claimed_stage: claimId,
           description: `Nhận thưởng giai đoạn ${stageIndex}${flowerId ? ` - ${flowerId}` : ''}`,
         }),
       })
@@ -75,18 +77,22 @@ export default function GamificationPage() {
         rewards = [20, 60, 150]
       }
       
-      // Check each stage
-      for (let i = 1; i <= 3; i++) {
-        if (totalPoints >= thresholds[i] && !claimedStages.includes(i)) {
-          claims.push({
-            flowerId,
-            flowerName: flowerNames[flowerId] || flowerId,
-            stageIndex: i,
-            coins: rewards[i - 1],
-            currentFlowerPrice: flowerPrice
-          })
-        }
-      }
+             // Check each stage
+       // IMPORTANT: We need to check per flower, not globally
+       // So we need to track claimed stages per flower
+       // For now, we'll track globally by combining flowerId and stageIndex
+       for (let i = 1; i <= 3; i++) {
+         const claimId = `${flowerId}_${i}` // Create unique claim ID
+         if (totalPoints >= thresholds[i] && !claimedStages.includes(claimId)) {
+           claims.push({
+             flowerId,
+             flowerName: flowerNames[flowerId] || flowerId,
+             stageIndex: i,
+             coins: rewards[i - 1],
+             currentFlowerPrice: flowerPrice
+           })
+         }
+       }
     })
     
     return claims
@@ -415,13 +421,14 @@ export default function GamificationPage() {
                   />
                   
                                      {/* Flower Progress */}
-                   <FlowerProgress 
-                     totalPoints={totalPoints}
-                     flowerPrice={getFlowerPrice(selectedFlowerDetail)}
-                     currentStage={0}
-                     onClaimReward={(coins) => handleClaimReward(coins, getCurrentStage(totalPoints))}
-                     claimedStages={claimedStages}
-                   />
+                                       <FlowerProgress 
+                      totalPoints={totalPoints}
+                      flowerPrice={getFlowerPrice(selectedFlowerDetail)}
+                      currentStage={0}
+                      onClaimReward={(coins) => handleClaimReward(coins, getCurrentStage(totalPoints), selectedFlowerDetail || undefined)}
+                      claimedStages={claimedStages}
+                      flowerId={selectedFlowerDetail}
+                    />
                 </div>
               </div>
             </div>

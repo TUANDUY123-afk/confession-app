@@ -8,7 +8,8 @@ interface FlowerProgressProps {
   flowerPrice: number
   currentStage: number
   onClaimReward?: (coins: number) => void
-  claimedStages?: number[]
+  claimedStages?: string[]
+  flowerId?: string
 }
 
 const getDifficulty = (price: number) => {
@@ -29,7 +30,7 @@ const getDifficulty = (price: number) => {
   }
 }
 
-export default function FlowerProgress({ totalPoints, flowerPrice, currentStage, onClaimReward, claimedStages = [] }: FlowerProgressProps) {
+export default function FlowerProgress({ totalPoints, flowerPrice, currentStage, onClaimReward, claimedStages = [], flowerId }: FlowerProgressProps) {
   const difficulty = getDifficulty(flowerPrice)
   const thresholds = difficulty.thresholds
   const rewards = difficulty.rewards
@@ -67,14 +68,18 @@ export default function FlowerProgress({ totalPoints, flowerPrice, currentStage,
 
   const pointsNeeded = nextThreshold > 0 ? nextThreshold - totalPoints : 0
 
+  // Create unique claim ID
+  const claimId = flowerId ? `${flowerId}_${stageIndex}` : stageIndex.toString()
+  
   // Check if can claim reward (reached threshold for current stage and not claimed yet)
   // Show button when user has enough points to reach the current stage
-  const canClaimReward = totalPoints >= currentThreshold && !claimedStages.includes(stageIndex) && currentThreshold > 0 && stageIndex > 0
+  const canClaimReward = totalPoints >= currentThreshold && !claimedStages.includes(claimId) && currentThreshold > 0 && stageIndex > 0
   
   console.log("FlowerProgress Debug:", {
     totalPoints,
     currentThreshold,
     stageIndex,
+    claimId,
     canClaimReward,
     claimedStages,
     reward
@@ -144,19 +149,19 @@ export default function FlowerProgress({ totalPoints, flowerPrice, currentStage,
               </button>
             )}
             
-            {/* Show claimed status if already claimed */}
-            {claimedStages.includes(stageIndex) && (
-              <div className="text-center text-sm font-semibold text-green-600">
-                ✓ Đã nhận thưởng
-              </div>
-            )}
-            
-            {/* Show tip if not reached and not claimed */}
-            {!canClaimReward && !claimedStages.includes(stageIndex) && (
-              <div className="text-xs text-gray-600">
-                💡 Hoa càng khó, thưởng xu càng lớn! Dùng xu để mua hoa đắt hơn! ✨
-              </div>
-            )}
+                          {/* Show claimed status if already claimed */}
+              {claimedStages.includes(claimId) && (
+                <div className="text-center text-sm font-semibold text-green-600">
+                  ✓ Đã nhận thưởng
+                </div>
+              )}
+              
+              {/* Show tip if not reached and not claimed */}
+              {!canClaimReward && !claimedStages.includes(claimId) && (
+                <div className="text-xs text-gray-600">
+                  💡 Hoa càng khó, thưởng xu càng lớn! Dùng xu để mua hoa đắt hơn! ✨
+                </div>
+              )}
           </div>
         )}
 
