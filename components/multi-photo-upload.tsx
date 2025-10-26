@@ -28,6 +28,7 @@ export default function MultiPhotoUpload({
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState("")
   const [showPreview, setShowPreview] = useState(false)
+  const [hasClicked, setHasClicked] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // ✅ Lấy hàm thông báo & thông tin người dùng
@@ -35,8 +36,12 @@ export default function MultiPhotoUpload({
   const currentUser = getCurrentUser()
 
   useEffect(() => {
-    fileInputRef.current?.click()
-  }, [])
+    // Only click once on mount
+    if (!hasClicked) {
+      fileInputRef.current?.click()
+      setHasClicked(true)
+    }
+  }, [hasClicked])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
