@@ -7,8 +7,7 @@
   "functions": {
     "app/api/**/*.ts": {
       "maxDuration": 60,
-      "memory": 1024,
-      "maxRequestBodySize": "50mb"
+      "memory": 3008
     }
   }
 }
