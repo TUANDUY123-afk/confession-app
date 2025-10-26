@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { X, ImageIcon, Pencil, Loader2 } from "lucide-react"
-import Image from "next/image"
+import NextImage from "next/image"
 import { useNotifications } from "@/contexts/NotificationContext"
 import { getCurrentUser } from "@/utils/user"
 import { createClient } from "@supabase/supabase-js"
@@ -243,7 +243,7 @@ export default function MultiPhotoUpload({
               className="group relative border-2 border-pink-100 hover:border-pink-300 transition-all rounded-xl overflow-hidden bg-gradient-to-br from-pink-50 to-white shadow-sm hover:shadow-md animate-fade-in"
             >
               <div className="relative w-full aspect-square">
-                <Image
+                <NextImage
                   src={photo.preview}
                   alt={`Preview ${index}`}
                   fill
