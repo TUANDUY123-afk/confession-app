@@ -67,8 +67,18 @@ export default function FlowerProgress({ totalPoints, flowerPrice, currentStage,
 
   const pointsNeeded = nextThreshold > 0 ? nextThreshold - totalPoints : 0
 
-  // Check if can claim reward (reached threshold and not claimed yet)
-  const canClaimReward = totalPoints >= currentThreshold && !claimedStages.includes(stageIndex) && currentThreshold > 0
+  // Check if can claim reward (reached threshold for current stage and not claimed yet)
+  // Show button when user has enough points to reach the current stage
+  const canClaimReward = totalPoints >= currentThreshold && !claimedStages.includes(stageIndex) && currentThreshold > 0 && stageIndex > 0
+  
+  console.log("FlowerProgress Debug:", {
+    totalPoints,
+    currentThreshold,
+    stageIndex,
+    canClaimReward,
+    claimedStages,
+    reward
+  })
 
   return (
     <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-2xl p-6 border border-yellow-200 shadow-md">
@@ -123,18 +133,26 @@ export default function FlowerProgress({ totalPoints, flowerPrice, currentStage,
             <div className="text-sm text-gray-700 mb-3">
               Hoàn thành giai đoạn này để nhận <span className="font-bold text-orange-600">{reward} xu</span>!
             </div>
-            {canClaimReward && onClaimReward ? (
+            
+            {/* Show claim button if reached threshold and not claimed */}
+            {canClaimReward && onClaimReward && (
               <button
                 onClick={() => onClaimReward(reward)}
-                className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white py-2 rounded-lg font-bold text-sm hover:from-yellow-500 hover:to-orange-600 transition-all shadow-lg"
+                className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 text-white py-2 rounded-lg font-bold text-sm hover:from-yellow-500 hover:to-orange-600 transition-all shadow-lg animate-pulse"
               >
                 🎁 Nhận {reward} Xu
               </button>
-            ) : claimedStages.includes(stageIndex) ? (
+            )}
+            
+            {/* Show claimed status if already claimed */}
+            {claimedStages.includes(stageIndex) && (
               <div className="text-center text-sm font-semibold text-green-600">
                 ✓ Đã nhận thưởng
               </div>
-            ) : (
+            )}
+            
+            {/* Show tip if not reached and not claimed */}
+            {!canClaimReward && !claimedStages.includes(stageIndex) && (
               <div className="text-xs text-gray-600">
                 💡 Hoa càng khó, thưởng xu càng lớn! Dùng xu để mua hoa đắt hơn! ✨
               </div>
