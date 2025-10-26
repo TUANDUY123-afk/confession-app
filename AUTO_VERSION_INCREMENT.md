@@ -11,7 +11,7 @@ Tự động tăng version mỗi khi deploy lên Vercel!
 ### Khi Deploy:
 1. **Build command** chạy: `npm run build`
 2. **Auto update** version trước khi build
-3. **Version** tăng lên: `0.1.0` → `0.1.1` → `0.1.2` ...
+3. **Version** tăng lên: `v1` → `v2` → `v3` ...
 4. **Build** với version mới
 5. **Deploy** lên Vercel
 
@@ -19,16 +19,16 @@ Tự động tăng version mỗi khi deploy lên Vercel!
 
 ## 📊 VERSION FORMAT
 
-### Format: `MAJOR.MINOR.PATCH`
+### Format: `vNUMBER`
 
-- **MAJOR**: Tăng khi có breaking changes (1.0.0)
-- **MINOR**: Tăng khi có tính năng mới (0.1.0)
-- **PATCH**: Tăng khi fix bug (0.0.1)
+- Đơn giản: `v1`, `v2`, `v3`, `v4` ...
+- Tự động tăng mỗi lần deploy
+- Không cần major.minor.patch phức tạp
 
 ### Hiện Tại:
-- **Starting**: `0.1.0`
-- **Next deploy**: `0.1.1`
-- **Sau đó**: `0.1.2`, `0.1.3` ...
+- **Current**: `v2`
+- **Next deploy**: `v3`
+- **Sau đó**: `v4`, `v5` ...
 
 ---
 
@@ -71,21 +71,21 @@ function incrementVersion(version: string): string {
 
 ### Deploy 1:
 ```bash
-Version: 0.1.0
+Version: v1
 Build: ✅
 Deploy: ✅
 ```
 
 ### Deploy 2:
 ```bash
-Version: 0.1.1 (auto updated!)
+Version: v2 (auto updated!)
 Build: ✅
 Deploy: ✅
 ```
 
 ### Deploy 3:
 ```bash
-Version: 0.1.2 (auto updated!)
+Version: v3 (auto updated!)
 Build: ✅
 Deploy: ✅
 ```
@@ -94,16 +94,10 @@ Deploy: ✅
 
 ## 🎛️ MANUAL UPDATE (Nếu cần)
 
-### Update major version:
+### Reset version:
 ```bash
 # Edit package.json manually
-"version": "1.0.0"
-```
-
-### Update minor version:
-```bash
-# Edit package.json manually
-"version": "0.2.0"
+"version": "v1"
 ```
 
 ---
@@ -112,5 +106,5 @@ Deploy: ✅
 
 Mỗi lần deploy lên Vercel, version sẽ tự động tăng! 🚀
 
-**Version hiện tại**: `0.1.1`  
-**Version tiếp theo**: `0.1.2`
+**Version hiện tại**: `v2`  
+**Version tiếp theo**: `v3`
