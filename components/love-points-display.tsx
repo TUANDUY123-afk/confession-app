@@ -4,7 +4,11 @@ import { useState, useEffect } from "react"
 import { Star, Flame } from "lucide-react"
 import { motion } from "framer-motion"
 
-export default function LovePointsDisplay() {
+interface LovePointsDisplayProps {
+  refreshKey?: number
+}
+
+export default function LovePointsDisplay({ refreshKey }: LovePointsDisplayProps) {
   const [pointsData, setPointsData] = useState({
     total_points: 0,
     current_streak: 0,
@@ -15,7 +19,7 @@ export default function LovePointsDisplay() {
 
   useEffect(() => {
     fetchPoints()
-  }, [])
+  }, [refreshKey])
 
   const fetchPoints = async () => {
     try {

@@ -302,10 +302,10 @@ export default function GamificationPage() {
           <p className="text-xs text-gray-500 mt-2">🧪 Test buttons</p>
         </div>
 
-        {/* Love Points */}
-        <div className="mb-6" key={`points-${refreshKey}`}>
-          <LovePointsDisplay />
-        </div>
+                 {/* Love Points */}
+         <div className="mb-6">
+           <LovePointsDisplay refreshKey={refreshKey} />
+         </div>
 
         {/* My Flowers */}
         <div className="mb-6">
