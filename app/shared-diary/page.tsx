@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { PlusCircle, Settings } from "lucide-react"
 import DiaryCard from "@/components/diary/DiaryCard"
 import MoodBackground from "@/components/MoodBackground"
+import FloatingHearts from "@/components/floating-hearts"
 import NewEntryModal from "@/components/diary/NewEntryModal"
 import SettingsModal from "@/components/diary/SettingsModal"
 
@@ -86,8 +87,11 @@ export default function SharedDiaryPage() {
   return (
     <main className="relative min-h-screen flex flex-col items-center justify-start py-8 px-4 overflow-y-auto">
       <MoodBackground mood={mood} />
+      
+      {/* 💞 Hiệu ứng tim bay */}
+      <FloatingHearts />
 
-      <div className="flex items-center justify-between w-full max-w-md mb-6">
+      <div className="relative z-10 flex items-center justify-between w-full max-w-md mb-6">
         <h1 className="text-3xl font-bold text-pink-600 flex items-center gap-2">
           📖 Nhật ký đôi
         </h1>
@@ -100,7 +104,7 @@ export default function SharedDiaryPage() {
         </button>
       </div>
 
-      <div className="flex flex-col gap-4 w-full max-w-md pb-32">
+      <div className="relative z-10 flex flex-col gap-4 w-full max-w-md pb-32">
         {loading ? (
           <p className="text-gray-500 text-center">Đang tải... ⏳</p>
         ) : entries.length === 0 ? (
@@ -121,7 +125,7 @@ export default function SharedDiaryPage() {
 
       <button
         onClick={() => setShowModal(true)}
-        className="fixed bottom-20 right-6 w-14 h-14 flex items-center justify-center 
+        className="relative z-20 fixed bottom-20 right-6 w-14 h-14 flex items-center justify-center 
                    rounded-full bg-gradient-to-r from-pink-500 to-rose-400 
                    text-white shadow-lg hover:scale-110 transition-transform"
       >

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { ArrowLeft, Upload } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import PhotoCard from "./photo-card"
+import FloatingHearts from "./floating-hearts"
 import dynamic from "next/dynamic"
 import { useNotifications } from "@/contexts/NotificationContext"
 
@@ -179,6 +180,9 @@ export default function PhotoWall() {
         className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-blue-50 
                    py-12 px-4 md:px-8 relative overflow-hidden transition-all duration-500"
       >
+        {/* 💞 Hiệu ứng tim bay */}
+        <FloatingHearts />
+        
         {/* Nút quay lại */}
         <div className="absolute top-6 left-6 z-40">
           <button

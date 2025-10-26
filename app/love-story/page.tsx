@@ -6,6 +6,7 @@ import Link from "next/link"
 import LoveStoryHeader from "@/components/love-story-header"
 import MilestoneList from "@/components/milestone-list"
 import LoveCalendar from "@/components/love-calendar"
+import FloatingHearts from "@/components/floating-hearts"
 import { useNotifications } from "@/contexts/NotificationContext"
 import { getCurrentUser } from "@/utils/user"
 
@@ -87,8 +88,11 @@ export default function LoveStoryPage() {
   if (isLoading) return <div className="text-center py-20">Đang tải...</div>
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-blue-50 py-12">
-      <div className="max-w-3xl mx-auto px-4">
+    <main className="relative min-h-screen bg-gradient-to-br from-rose-50 via-pink-50 to-blue-50 py-12 overflow-hidden">
+      {/* 💞 Hiệu ứng tim bay */}
+      <FloatingHearts />
+      
+      <div className="max-w-3xl mx-auto px-4 relative z-10">
         <Link href="/" className="flex items-center text-rose-500 mb-6 hover:underline">
           <ArrowLeft className="w-4 h-4 mr-2" /> Quay lại
         </Link>
