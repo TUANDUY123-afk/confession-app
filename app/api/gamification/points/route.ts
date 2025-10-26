@@ -104,6 +104,8 @@ export async function POST(request: Request) {
     // Add owned flower
     if (owned_flower !== undefined && !ownedFlowers.includes(owned_flower)) {
       ownedFlowers.push(owned_flower)
+      // Reset points for the new flower to 0 (start fresh)
+      // This will be done after the main update
     }
     
     // Update or insert love points
@@ -197,8 +199,43 @@ export async function POST(request: Request) {
       description,
     } as any)
     
-    // Update points for all owned flowers
-    if (points !== undefined && points > 0 && ownedFlowers.length > 0) {
+    // Handle new flower purchase: reset points to 0
+    if (owned_flower !== undefined) {
+      const wasNewFlower = !((currentPoints as any)?.owned_flowers || []).includes(owned_flower)
+      
+      if (wasNewFlower) {
+        // This is a new flower purchase - start with 0 points
+        const { data: existing } = await supabase
+          .from("flower_points")
+          .select("*")
+          .eq("couple_id", COUPLE_ID)
+          .eq("flower_id", owned_flower)
+          .maybeSingle()
+        
+        if (existing) {
+          await supabase
+            .from("flower_points")
+            .update({
+              points: 0,
+              last_updated: new Date().toISOString(),
+            } as any)
+            .eq("couple_id", COUPLE_ID)
+            .eq("flower_id", owned_flower)
+        } else {
+          await supabase
+            .from("flower_points")
+            .insert({
+              couple_id: COUPLE_ID,
+              flower_id: owned_flower,
+              points: 0,
+              last_updated: new Date().toISOString(),
+            } as any)
+        }
+      }
+    }
+    
+    // Update points for all owned flowers (only when earning points, not buying flowers)
+    if (points !== undefined && points > 0 && ownedFlowers.length > 0 && !owned_flower) {
       for (const flowerId of ownedFlowers) {
         // Get current flower points
         const { data: flowerData } = await supabase
