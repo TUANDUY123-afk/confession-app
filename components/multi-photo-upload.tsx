@@ -54,22 +54,39 @@ export default function MultiPhotoUpload({
           if (file.type === "image/heic" || file.type === "image/heif" || file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif")) {
             // Try to convert HEIC to JPEG using browser Image APIs
             try {
+              console.log("[HEIC] Attempting to convert HEIC file:", file.name, file.size)
               const imageBitmap = await createImageBitmap(file)
+              console.log("[HEIC] ImageBitmap created:", imageBitmap.width, "x", imageBitmap.height)
+              
+              // Scale down large images to prevent memory issues
+              const maxDimension = 3000
+              let { width, height } = imageBitmap
+              
+              if (width > maxDimension || height > maxDimension) {
+                const scale = Math.min(maxDimension / width, maxDimension / height)
+                width = Math.floor(width * scale)
+                height = Math.floor(height * scale)
+                console.log("[HEIC] Scaling down to:", width, "x", height)
+              }
+              
               const canvas = document.createElement("canvas")
-              canvas.width = imageBitmap.width
-              canvas.height = imageBitmap.height
+              canvas.width = width
+              canvas.height = height
               const ctx = canvas.getContext("2d")
               if (ctx) {
-                ctx.drawImage(imageBitmap, 0, 0)
+                ctx.drawImage(imageBitmap, 0, 0, width, height)
                 
-                // Convert to blob and create new file
+                // Convert to blob with lower quality to reduce size
                 const blob = await new Promise<Blob>((resolve) => {
-                  canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.9)
+                  canvas.toBlob((blob) => resolve(blob!), "image/jpeg", 0.85)
                 })
+                console.log("[HEIC] Conversion successful, new size:", blob.size)
                 processedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" })
               }
             } catch (heicError) {
-              console.warn("HEIC conversion failed, using original:", heicError)
+              console.error("HEIC conversion failed:", heicError)
+              alert("Không thể chuyển đổi ảnh HEIC. Vui lòng chuyển sang JPEG trước khi upload.")
+              continue // Skip this file
             }
           }
           
