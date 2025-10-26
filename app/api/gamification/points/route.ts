@@ -197,6 +197,50 @@ export async function POST(request: Request) {
       description,
     } as any)
     
+    // Update points for all owned flowers
+    if (points !== undefined && points > 0 && ownedFlowers.length > 0) {
+      for (const flowerId of ownedFlowers) {
+        // Get current flower points
+        const { data: flowerData } = await supabase
+          .from("flower_points")
+          .select("points")
+          .eq("couple_id", COUPLE_ID)
+          .eq("flower_id", flowerId)
+          .maybeSingle()
+        
+        const currentFlowerPoints = (flowerData as any)?.points || 0
+        const newFlowerPoints = currentFlowerPoints + points
+        
+        // Update or insert flower points
+        const { data: existing } = await supabase
+          .from("flower_points")
+          .select("*")
+          .eq("couple_id", COUPLE_ID)
+          .eq("flower_id", flowerId)
+          .maybeSingle()
+        
+        if (existing) {
+          await supabase
+            .from("flower_points")
+            .update({
+              points: newFlowerPoints,
+              last_updated: new Date().toISOString(),
+            } as any)
+            .eq("couple_id", COUPLE_ID)
+            .eq("flower_id", flowerId)
+        } else {
+          await supabase
+            .from("flower_points")
+            .insert({
+              couple_id: COUPLE_ID,
+              flower_id: flowerId,
+              points: newFlowerPoints,
+              last_updated: new Date().toISOString(),
+            } as any)
+        }
+      }
+    }
+    
     return NextResponse.json(data)
   } catch (err) {
     console.error("Error in POST /api/gamification/points:", err)
