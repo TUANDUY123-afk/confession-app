@@ -2,27 +2,15 @@ import { readFileSync, writeFileSync } from 'fs'
 import { join } from 'path'
 
 function incrementVersion(version: string): string {
-  const parts = version.split('.')
-  let major = parseInt(parts[0])
-  let minor = parseInt(parts[1])
-  let patch = parseInt(parts[2])
-
-  // Increment patch version
-  patch++
-  
-  // If patch exceeds 99, increment minor
-  if (patch > 99) {
-    patch = 0
-    minor++
+  // Extract current version number from "v1", "v2", etc.
+  const versionMatch = version.match(/v(\d+)/)
+  if (versionMatch) {
+    const currentNumber = parseInt(versionMatch[1])
+    const newNumber = currentNumber + 1
+    return `v${newNumber}`
   }
-  
-  // If minor exceeds 99, increment major
-  if (minor > 99) {
-    minor = 0
-    major++
-  }
-
-  return `${major}.${minor}.${patch}`
+  // If no version found, start at v1
+  return "v1"
 }
 
 function main() {
@@ -45,12 +33,12 @@ function main() {
     // Update version in app/page.tsx
     const pageTsxContent = readFileSync(pageTsxPath, 'utf-8')
     const updatedContent = pageTsxContent.replace(
-      /const APP_VERSION = "v\d+\.\d+\.\d+"/,
-      `const APP_VERSION = "v${newVersion}"`
+      /const APP_VERSION = "v\d+"/,
+      `const APP_VERSION = "${newVersion}"`
     )
     writeFileSync(pageTsxPath, updatedContent, 'utf-8')
     
-    console.log(`✅ Version updated in app/page.tsx: v${oldVersion} → v${newVersion}`)
+    console.log(`✅ Version updated in app/page.tsx: ${oldVersion} → ${newVersion}`)
     
     // Return new version for Vercel
     process.stdout.write(newVersion)
