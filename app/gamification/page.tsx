@@ -13,6 +13,7 @@ import FlowerProgress from "@/components/flower-progress"
 
 export default function GamificationPage() {
   const [totalPoints, setTotalPoints] = useState(0)
+  const [totalCoins, setTotalCoins] = useState(0)
   const [refreshKey, setRefreshKey] = useState(0)
   const [ownedFlowers, setOwnedFlowers] = useState<string[]>([])
   const [currentFlower, setCurrentFlower] = useState<string | undefined>()
@@ -29,6 +30,7 @@ export default function GamificationPage() {
       const res = await fetch("/api/gamification/points")
       const data = await res.json()
       setTotalPoints(data.total_points || 0)
+      setTotalCoins(data.coins || 0)
     } catch (err) {
       console.error("Error fetching points:", err)
     }
@@ -89,25 +91,32 @@ export default function GamificationPage() {
     }
   }
 
-  const handleBuyFlower = async (flowerId: string, price: number) => {
-    // Deduct points
+  const handleBuyFlower = async (flowerId: string, price: number, useCoins: boolean) => {
     try {
-      await fetch("/api/gamification/points", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          activity_type: "buy_flower",
-          points: -price, // Negative to deduct
-          description: `Mua hoa: ${flowerId}`,
-        }),
-      })
+      if (useCoins && price > 0) {
+        // Deduct coins when buying with coins
+        await fetch("/api/gamification/points", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            activity_type: "buy_flower_with_coins",
+            points: 0,
+            coins: -price,
+            description: `Mua hoa bằng xu: ${flowerId}`,
+          }),
+        })
+      }
       
       // Add to owned flowers
       setOwnedFlowers(prev => [...prev, flowerId])
       setCurrentFlower(flowerId)
       setRefreshKey(prev => prev + 1)
       setShowShop(false) // Close shop after purchase
-      alert(`✅ Đã mua hoa thành công! 🌸`)
+      
+      const message = useCoins && price > 0 
+        ? `✅ Đã mua hoa thành công bằng ${price} xu! 🌸`
+        : `✅ Đã nhận hoa miễn phí! 🌸`
+      alert(message)
     } catch (err) {
       console.error("Error buying flower:", err)
       alert(`Lỗi khi mua hoa 😢`)
@@ -247,11 +256,12 @@ export default function GamificationPage() {
                     ×
                   </button>
                 </div>
-                <FlowerShop 
-                  currentPoints={totalPoints}
-                  ownedFlowers={ownedFlowers}
-                  onBuyFlower={handleBuyFlower}
-                />
+                                 <FlowerShop 
+                   currentPoints={totalPoints}
+                   currentCoins={totalCoins}
+                   ownedFlowers={ownedFlowers}
+                   onBuyFlower={handleBuyFlower}
+                 />
               </div>
             </div>
           </div>

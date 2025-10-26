@@ -73,19 +73,29 @@ const FLOWERS: Flower[] = [
 
 interface FlowerShopProps {
   currentPoints: number
+  currentCoins: number
   ownedFlowers: string[]
-  onBuyFlower: (flowerId: string, price: number) => void
+  onBuyFlower: (flowerId: string, price: number, useCoins: boolean) => void
 }
 
-export default function FlowerShop({ currentPoints, ownedFlowers, onBuyFlower }: FlowerShopProps) {
+export default function FlowerShop({ currentPoints, currentCoins, ownedFlowers, onBuyFlower }: FlowerShopProps) {
   const [selectedFlower, setSelectedFlower] = useState<Flower | null>(null)
 
   const handleBuy = (flower: Flower) => {
-    if (currentPoints >= flower.price) {
-      onBuyFlower(flower.id, flower.price)
+    const isFirstFlower = ownedFlowers.length === 0
+    
+    if (isFirstFlower) {
+      // Hoa đầu tiên miễn phí
+      onBuyFlower(flower.id, 0, false)
       setSelectedFlower(null)
     } else {
-      alert(`❌ Không đủ điểm! Cần thêm ${flower.price - currentPoints} điểm.`)
+      // Hoa sau mua bằng xu
+      if (currentCoins >= flower.price) {
+        onBuyFlower(flower.id, flower.price, true)
+        setSelectedFlower(null)
+      } else {
+        alert(`❌ Không đủ xu! Cần thêm ${flower.price - currentCoins} xu.`)
+      }
     }
   }
 
@@ -101,18 +111,30 @@ export default function FlowerShop({ currentPoints, ownedFlowers, onBuyFlower }:
         <h3 className="text-lg font-bold text-purple-600">🌸 Shop Hoa</h3>
       </div>
 
-      <div className="mb-4 p-3 bg-white/80 rounded-lg text-center">
-        <div className="text-sm text-gray-600 mb-1">Điểm hiện có</div>
-        <div className="text-2xl font-bold text-pink-600 flex items-center justify-center gap-2">
-          <Heart className="w-5 h-5 fill-pink-500 text-pink-500" />
-          {currentPoints}
+      <div className="mb-4 p-3 bg-white/80 rounded-lg">
+        <div className="grid grid-cols-2 gap-3">
+          <div className="text-center">
+            <div className="text-sm text-gray-600 mb-1">Điểm</div>
+            <div className="text-2xl font-bold text-pink-600 flex items-center justify-center gap-2">
+              <Heart className="w-5 h-5 fill-pink-500 text-pink-500" />
+              {currentPoints}
+            </div>
+          </div>
+          <div className="text-center">
+            <div className="text-sm text-gray-600 mb-1">Xu</div>
+            <div className="text-2xl font-bold text-yellow-600 flex items-center justify-center gap-2">
+              <span>🪙</span>
+              {currentCoins}
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         {FLOWERS.map((flower) => {
           const isOwned = ownedFlowers.includes(flower.id)
-          const canAfford = currentPoints >= flower.price
+          const isFirstFlower = ownedFlowers.length === 0
+          const canAfford = isFirstFlower ? true : currentCoins >= flower.price
 
           return (
             <motion.div
@@ -143,20 +165,50 @@ export default function FlowerShop({ currentPoints, ownedFlowers, onBuyFlower }:
               </div>
               
               {!isOwned && (
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold text-pink-600">{flower.price}</span>
-                  {canAfford && (
-                    <motion.button
-                      whileHover={{ scale: 1.1 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        handleBuy(flower)
-                      }}
-                      className={`bg-gradient-to-r ${flower.gradient} text-white px-3 py-1 rounded-lg text-xs font-semibold`}
-                    >
-                      Mua
-                    </motion.button>
+                <div className="space-y-2">
+                  {isFirstFlower ? (
+                    <div className="text-center">
+                      <div className="text-xs font-bold text-green-600 mb-1">🎁 MIỄN PHÍ</div>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleBuy(flower)
+                        }}
+                        className={`w-full bg-gradient-to-r ${flower.gradient} text-white py-2 rounded-lg text-sm font-semibold`}
+                      >
+                        Nhận Ngay
+                      </motion.button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-gray-600">Giá:</span>
+                        <span className="text-lg font-bold text-yellow-600 flex items-center gap-1">
+                          <span>🪙</span>
+                          {flower.price}
+                        </span>
+                      </div>
+                      {canAfford && (
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleBuy(flower)
+                          }}
+                          className={`w-full bg-gradient-to-r ${flower.gradient} text-white py-2 rounded-lg text-sm font-semibold`}
+                        >
+                          Mua Bằng Xu
+                        </motion.button>
+                      )}
+                      {!canAfford && (
+                        <div className="text-center text-xs text-red-500 font-semibold">
+                          Không đủ xu
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}

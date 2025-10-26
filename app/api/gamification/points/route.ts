@@ -40,9 +40,9 @@ export async function POST(request: Request) {
   try {
     const supabase = getSupabaseClient()
     const body = await request.json()
-    const { activity_type, points, description } = body
+    const { activity_type, points, description, coins } = body
     
-    if (!activity_type || !points) {
+    if (activity_type === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
     
@@ -86,15 +86,26 @@ export async function POST(request: Request) {
     
     if (currentPoints) {
       // Update existing record
+      const updateData: any = {
+        current_streak: newStreak,
+        longest_streak: longestStreak,
+        last_activity_date: today,
+        updated_at: new Date().toISOString(),
+      }
+      
+      // Update points if provided
+      if (points !== undefined) {
+        updateData.total_points = (currentPoints as any).total_points + points
+      }
+      
+      // Update coins if provided
+      if (coins !== undefined) {
+        updateData.coins = ((currentPoints as any).coins || 0) + coins
+      }
+      
       const result = await supabase
         .from("love_points")
-        .update({
-          total_points: (currentPoints as any).total_points + points,
-          current_streak: newStreak,
-          longest_streak: longestStreak,
-          last_activity_date: today,
-          updated_at: new Date().toISOString(),
-        } as any)
+        .update(updateData as any)
         .eq("couple_id", COUPLE_ID)
         .select()
         .single()
@@ -102,16 +113,29 @@ export async function POST(request: Request) {
       error = result.error
     } else {
       // Insert new record
+      const insertData: any = {
+        couple_id: COUPLE_ID,
+        current_streak: newStreak,
+        longest_streak: longestStreak,
+        last_activity_date: today,
+        updated_at: new Date().toISOString(),
+      }
+      
+      if (points !== undefined) {
+        insertData.total_points = points
+      } else {
+        insertData.total_points = 0
+      }
+      
+      if (coins !== undefined) {
+        insertData.coins = coins
+      } else {
+        insertData.coins = 0
+      }
+      
       const result = await supabase
         .from("love_points")
-        .insert({
-          couple_id: COUPLE_ID,
-          total_points: points,
-          current_streak: newStreak,
-          longest_streak: longestStreak,
-          last_activity_date: today,
-          updated_at: new Date().toISOString(),
-        } as any)
+        .insert(insertData as any)
         .select()
         .single()
       data = result.data
