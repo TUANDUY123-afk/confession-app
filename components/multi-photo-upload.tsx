@@ -44,6 +44,54 @@ export default function MultiPhotoUpload({
     }
   }, [hasClicked])
 
+  // ✅ Function to compress image
+  const compressImage = (file: File, maxWidth: number = 1920, quality: number = 0.85): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.readAsDataURL(file)
+      reader.onload = (event) => {
+        const img = new Image()
+        img.src = event.target?.result as string
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          let width = img.width
+          let height = img.height
+          
+          // Calculate new dimensions
+          if (width > maxWidth) {
+            height = (maxWidth / width) * height
+            width = maxWidth
+          }
+          
+          canvas.width = width
+          canvas.height = height
+          
+          const ctx = canvas.getContext('2d')
+          ctx?.drawImage(img, 0, 0, width, height)
+          
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const compressedFile = new File([blob], file.name, {
+                  type: 'image/jpeg',
+                  lastModified: Date.now()
+                })
+                console.log(`[Compress] Original: ${(file.size / 1024 / 1024).toFixed(2)}MB -> Compressed: ${(compressedFile.size / 1024 / 1024).toFixed(2)}MB`)
+                resolve(compressedFile)
+              } else {
+                resolve(file)
+              }
+            },
+            'image/jpeg',
+            quality
+          )
+        }
+        img.onerror = reject
+      }
+      reader.onerror = reject
+    })
+  }
+
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
@@ -53,21 +101,23 @@ export default function MultiPhotoUpload({
     for (const file of files) {
       if (file.type.startsWith("image/")) {
         try {
-          // Upload original file without any compression
-          let processedFile = file
-          let preview = ""
-          
           console.log("[Upload] Processing file:", file.name, "type:", file.type, "size:", file.size)
+          
+          // ✅ Compress image if it's too large (> 2MB)
+          let processedFile = file
+          if (file.size > 2 * 1024 * 1024) {
+            console.log("[Compress] Compressing large file:", file.size)
+            processedFile = await compressImage(file)
+          }
           
           // Create preview
           const reader = new FileReader()
-          const processedFileRef = processedFile // Copy for closure
           reader.onload = (event) => {
-            preview = event.target?.result as string
+            const preview = event.target?.result as string
             newPhotos.push({
-              file: processedFileRef,
+              file: processedFile,
               preview,
-              title: processedFileRef.name.replace(/\.[^/.]+$/, ""),
+              title: file.name.replace(/\.[^/.]+$/, ""),
             })
             
             if (newPhotos.length === files.length) {
