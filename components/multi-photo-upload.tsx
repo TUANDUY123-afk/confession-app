@@ -47,76 +47,11 @@ export default function MultiPhotoUpload({
     for (const file of files) {
       if (file.type.startsWith("image/")) {
         try {
-          // Convert HEIC/HEIF to JPEG if needed
+          // Upload original file without any compression
           let processedFile = file
           let preview = ""
           
-          // Skip HEIC compression completely - they don't work well with browser canvas
-          const isHEIC = file.type === "image/heic" || file.type === "image/heif" || 
-                        file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif")
-          
-          // Only compress non-HEIC files
-          if (!isHEIC && file.size > 500 * 1024) {
-            console.log("[Compress] Large non-HEIC file detected, compressing:", file.name, file.size)
-            
-            try {
-              const img = new Image()
-              const imageObjectUrl = URL.createObjectURL(file)
-              
-              processedFile = await new Promise<File>((resolve, reject) => {
-                img.onload = () => {
-                  // Calculate new dimensions (max 2048px on longest side)
-                  let width = img.width
-                  let height = img.height
-                  const maxDimension = 2048
-                  
-                  if (width > maxDimension || height > maxDimension) {
-                    const scale = Math.min(maxDimension / width, maxDimension / height)
-                    width = Math.floor(width * scale)
-                    height = Math.floor(height * scale)
-                    console.log("[Compress] Resizing to:", width, "x", height)
-                  }
-                  
-                  const canvas = document.createElement("canvas")
-                  canvas.width = width
-                  canvas.height = height
-                  const ctx = canvas.getContext("2d")
-                  
-                  if (ctx) {
-                    ctx.drawImage(img, 0, 0, width, height)
-                    
-                    canvas.toBlob((blob) => {
-                      if (blob) {
-                        const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), { type: "image/jpeg" })
-                        console.log("[Compress] Original:", file.size, "Compressed:", blob.size, "Reduction:", ((1 - blob.size / file.size) * 100).toFixed(1) + "%")
-                        URL.revokeObjectURL(imageObjectUrl)
-                        resolve(compressedFile)
-                      } else {
-                        URL.revokeObjectURL(imageObjectUrl)
-                        reject(new Error("Blob conversion failed"))
-                      }
-                    }, "image/jpeg", 0.85)
-                  } else {
-                    URL.revokeObjectURL(imageObjectUrl)
-                    reject(new Error("Canvas context failed"))
-                  }
-                }
-                
-                img.onerror = () => {
-                  URL.revokeObjectURL(imageObjectUrl)
-                  reject(new Error("Image load failed"))
-                }
-                
-                img.src = imageObjectUrl
-              })
-              
-              console.log("[Compress] File compressed successfully:", processedFile.name)
-            } catch (compressError) {
-              console.error("[Compress] Compression failed, using original:", compressError)
-            }
-          } else if (isHEIC) {
-            console.log("[HEIC] Skipping compression for HEIC file, will upload original:", file.name, file.size)
-          }
+          console.log("[Upload] Processing file:", file.name, "type:", file.type, "size:", file.size)
           
           // Create preview
           const reader = new FileReader()
