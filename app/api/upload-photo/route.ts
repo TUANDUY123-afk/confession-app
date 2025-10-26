@@ -1,6 +1,10 @@
 import { getSupabaseClient } from "@/lib/supabase-client"
 import { NextResponse } from "next/server"
 
+export const maxDuration = 60
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function POST(request: Request) {
   try {
     const formData = await request.formData()
