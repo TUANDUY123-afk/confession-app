@@ -12,13 +12,14 @@ export default function VersionBadge({ version }: VersionBadgeProps) {
 
   const changelog = [
     {
-      version: "v2 (Current)",
+      version: `${version} (Current)`,
       items: [
         "Thêm nén ảnh cho Love Story",
         "Thêm hiệu ứng tim bay vào tất cả các trang",
         "Đổi cơ chế versioning từ 0.1.x sang v1, v2, v3",
         "Sửa lỗi hiển thị tên người đăng trong thông báo upload ảnh",
-        "Thêm GitHub Actions để tự động tăng version"
+        "Thêm GitHub Actions để tự động tăng version",
+        "Thêm version badge với changelog modal"
       ]
     },
     {
