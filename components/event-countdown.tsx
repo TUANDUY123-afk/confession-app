@@ -26,7 +26,8 @@ export default function EventCountdown({ events }: EventCountdownProps) {
       .map(event => {
         const eventDate = new Date(event.date)
         eventDate.setHours(0, 0, 0, 0)
-        const daysUntil = Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        // Sử dụng Math.floor thay vì Math.ceil để không bị lệch 1 ngày
+        const daysUntil = Math.floor((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
         return { ...event, daysUntil }
       })
       .filter(event => event.daysUntil >= 0) // Chỉ lấy sự kiện trong tương lai hoặc hôm nay

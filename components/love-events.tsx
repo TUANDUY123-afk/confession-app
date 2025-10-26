@@ -89,7 +89,8 @@ export default function LoveEvents() {
   function calcDaysUntil(date: string) {
     const today = new Date()
     const eventDate = new Date(date)
-    return Math.ceil((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    // Sử dụng Math.floor thay vì Math.ceil để không bị lệch 1 ngày
+    return Math.floor((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
   }
 
   // 💖 Hiệu ứng tim bay khi hôm nay trùng sự kiện
