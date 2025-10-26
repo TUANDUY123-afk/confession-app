@@ -239,7 +239,10 @@ export async function POST(request: Request) {
     }
     
     // Update points for all owned flowers (only when earning points, not buying flowers)
-    if (points !== undefined && points > 0 && ownedFlowers.length > 0) {
+    // Skip updating points if this is a purchase (owned_flower is defined and it's new)
+    const isPurchasingNewFlower = owned_flower !== undefined && !((currentPoints as any)?.owned_flowers || []).includes(owned_flower)
+    
+    if (points !== undefined && points > 0 && ownedFlowers.length > 0 && !isPurchasingNewFlower) {
       console.log("Updating points for owned flowers:", ownedFlowers, "Adding points:", points)
       for (const flowerId of ownedFlowers) {
         // Get current flower points
