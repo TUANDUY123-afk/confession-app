@@ -80,18 +80,25 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       const u = await getCurrentUser()
       if (u?.name) {
         setUser(u.name)
-        await fetchNotifications(u.name)
+        // Fetch notifications will be called by the interval effect
       }
     }
     init()
-  }, [fetchNotifications])
+  }, []) // Empty dependency array - only run once on mount
 
   // 🩵 Cập nhật mỗi 10s
   useEffect(() => {
     if (!user) return
-    const interval = setInterval(() => fetchNotifications(user), 10000)
+    
+    // Fetch immediately on user change
+    fetchNotifications(user)
+    
+    // Then fetch every 10s
+    const interval = setInterval(() => {
+      fetchNotifications(user)
+    }, 10000)
     return () => clearInterval(interval)
-  }, [user, fetchNotifications])
+  }, [user])
 
   // 📨 Thêm thông báo mới
   const addNotification = useCallback(async (notification: Omit<Notification, "id" | "timestamp" | "read">) => {
