@@ -18,7 +18,7 @@ const FLOWERS: Flower[] = [
   {
     id: "rose",
     name: "Hoa Hồng",
-    emoji: "🌹",
+    emoji: "🌺",
     price: 100,
     color: "red-500",
     description: "Hoa hồng đỏ - biểu tượng của tình yêu đam mê",
@@ -27,7 +27,7 @@ const FLOWERS: Flower[] = [
   {
     id: "cherry",
     name: "Hoa Anh Đào",
-    emoji: "🌸",
+    emoji: "🌼",
     price: 200,
     color: "pink-400",
     description: "Hoa anh đào - sự dịu dàng, ngọt ngào",
@@ -45,7 +45,7 @@ const FLOWERS: Flower[] = [
   {
     id: "tulip",
     name: "Hoa Tulip",
-    emoji: "🌷",
+    emoji: "💐",
     price: 120,
     color: "purple-400",
     description: "Hoa tulip - sự hoàn mỹ và tình yêu vĩnh cửu",
@@ -63,7 +63,7 @@ const FLOWERS: Flower[] = [
   {
     id: "jasmine",
     name: "Hoa Nhài",
-    emoji: "🤍",
+    emoji: "🌱",
     price: 160,
     color: "white",
     description: "Hoa nhài - sự tinh khiết và vẻ đẹp tự nhiên",

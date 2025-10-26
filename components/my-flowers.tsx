@@ -25,14 +25,14 @@ const FLOWERS: { [key: string]: Flower } = {
   rose: {
     id: "rose",
     name: "Hoa Hồng",
-    emoji: "🌹",
+    emoji: "🌺",
     price: 100,
     gradient: "from-red-500 to-pink-600"
   },
   cherry: {
     id: "cherry",
     name: "Hoa Anh Đào",
-    emoji: "🌸",
+    emoji: "🌼",
     price: 200,
     gradient: "from-pink-400 to-rose-500"
   },
@@ -46,7 +46,7 @@ const FLOWERS: { [key: string]: Flower } = {
   tulip: {
     id: "tulip",
     name: "Hoa Tulip",
-    emoji: "🌷",
+    emoji: "💐",
     price: 120,
     gradient: "from-purple-400 to-pink-500"
   },
@@ -60,7 +60,7 @@ const FLOWERS: { [key: string]: Flower } = {
   jasmine: {
     id: "jasmine",
     name: "Hoa Nhài",
-    emoji: "🤍",
+    emoji: "🌱",
     price: 160,
     gradient: "from-gray-100 to-white"
   }
