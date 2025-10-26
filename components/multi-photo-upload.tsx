@@ -130,12 +130,14 @@ export default function MultiPhotoUpload({
       setShowPreview(false)
       onUploadComplete()
       onClose()
-    } catch (err) {
-      console.error(err)
-      setError("Không thể tải lên ảnh 😢")
-    } finally {
-      setUploading(false)
-    }
+      } catch (err) {
+        console.error("[Upload Error] Details:", err)
+        const errorMessage = err instanceof Error ? err.message : String(err)
+        setError(`Không thể tải lên ảnh 😢: ${errorMessage}`)
+        alert(`Upload failed: ${errorMessage}`)
+      } finally {
+        setUploading(false)
+      }
   }
 
   if (!showPreview) {
