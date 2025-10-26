@@ -202,11 +202,15 @@ export async function POST(request: Request) {
     // Handle new flower purchase: reset points to 0
     if (owned_flower !== undefined) {
       const wasNewFlower = !((currentPoints as any)?.owned_flowers || []).includes(owned_flower)
+      console.log("=== FLOWER PURCHASE DETECTED ===")
+      console.log("Flower ID:", owned_flower)
+      console.log("Is new flower?", wasNewFlower)
+      console.log("Current owned_flowers:", (currentPoints as any)?.owned_flowers)
       
       if (wasNewFlower) {
-        // This is a new flower purchase - start with 0 points from purchase time
+        // This is a new flower purchase - ALWAYS reset to 0 points from purchase time
         const purchasedAt = new Date().toISOString()
-        console.log("New flower purchased:", owned_flower, "- resetting points to 0 at", purchasedAt)
+        console.log("New flower purchased:", owned_flower, "- FORCING reset to 0 at", purchasedAt)
         const { data: existing } = await supabase
           .from("flower_points")
           .select("*")
@@ -214,7 +218,10 @@ export async function POST(request: Request) {
           .eq("flower_id", owned_flower)
           .maybeSingle()
         
+        console.log("Existing record:", existing)
+        
         if (existing) {
+          console.log("Updating existing record to 0 points")
           await supabase
             .from("flower_points")
             .update({
@@ -225,6 +232,7 @@ export async function POST(request: Request) {
             .eq("couple_id", COUPLE_ID)
             .eq("flower_id", owned_flower)
         } else {
+          console.log("Inserting new record with 0 points")
           await supabase
             .from("flower_points")
             .insert({
@@ -235,6 +243,10 @@ export async function POST(request: Request) {
               last_updated: purchasedAt,
             } as any)
         }
+        
+        console.log("=== FLOWER RESET COMPLETE ===")
+      } else {
+        console.log("Flower already owned, skipping reset")
       }
     }
     
