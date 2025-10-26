@@ -103,19 +103,41 @@ export default function MultiPhotoUpload({
       setError("")
 
       for (const photo of selectedPhotos) {
+        console.log("[Upload] Starting upload:", photo.file.name, photo.file.size, "type:", photo.file.type)
+        
         const formData = new FormData()
         formData.append("file", photo.file)
         formData.append("title", photo.title)
 
-        const response = await fetch("/api/upload-photo", {
-          method: "POST",
-          body: formData,
-        })
+        // Add timeout for mobile uploads
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 60000) // 60s timeout
+        
+        try {
+          const response = await fetch("/api/upload-photo", {
+            method: "POST",
+            body: formData,
+            signal: controller.signal,
+          })
+          
+          clearTimeout(timeoutId)
 
-        if (!response.ok) throw new Error("Upload failed")
+          if (!response.ok) {
+            const errorText = await response.text()
+            console.error("[Upload] Failed:", response.status, errorText)
+            throw new Error(`Upload failed: ${errorText}`)
+          }
 
-        const data = await response.json()
-        onPhotoUploaded?.(data.url, data.title)
+          const data = await response.json()
+          console.log("[Upload] Success:", data.url)
+          onPhotoUploaded?.(data.url, data.title)
+        } catch (fetchError) {
+          clearTimeout(timeoutId)
+          if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+            throw new Error("Upload timeout - ảnh quá lớn hoặc mạng chậm")
+          }
+          throw fetchError
+        }
       }
 
       // ✅ Gửi thông báo sau khi tải ảnh thành công (chỉ 1 lần cho toàn bộ upload)

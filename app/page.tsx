@@ -7,7 +7,7 @@ import FloatingHearts from "@/components/floating-hearts"
 import ConfessionMessage from "@/components/confession-message"
 import Link from "next/link"
 
-const APP_VERSION = "v11"
+const APP_VERSION = "v12"
 
 export default function Home() {
   const [showMessage, setShowMessage] = useState(false)
