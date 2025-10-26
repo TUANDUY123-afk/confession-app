@@ -113,12 +113,16 @@ export async function POST(request: Request) {
       
       // Update points if provided
       if (points !== undefined) {
-        updateData.total_points = (currentPoints as any).total_points + points
+        updateData.total_points = ((currentPoints as any).total_points || 0) + points
+      } else {
+        updateData.total_points = (currentPoints as any).total_points || 0
       }
       
       // Update coins if provided
       if (coins !== undefined) {
         updateData.coins = ((currentPoints as any).coins || 0) + coins
+      } else {
+        updateData.coins = (currentPoints as any).coins || 0
       }
       
       const result = await supabase
