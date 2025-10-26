@@ -19,17 +19,31 @@ export async function POST(request: Request) {
       )
     }
 
-    console.log("[v0] Uploading file:", file.name, "type:", file.type, "size:", file.size, "dimensions check needed")
+    console.log("[v0] Uploading file:", file.name, "type:", file.type, "size:", file.size)
 
     const supabase = getSupabaseClient()
     const timestamp = Date.now()
-    const filename = `photos/${timestamp}-${file.name}`
+    // Change HEIC extension to jpg for display compatibility
+    let filename = file.name
+    if (file.name.toLowerCase().endsWith(".heic") || file.name.toLowerCase().endsWith(".heif")) {
+      filename = file.name.replace(/\.(heic|heif)$/i, ".jpg")
+      console.log("[v0] HEIC file detected, renaming to:", filename)
+    }
+    filename = `photos/${timestamp}-${filename}`
+    
     const buffer = await file.arrayBuffer()
+    
+    // Force image/jpeg content type for HEIC to ensure compatibility
+    let contentType = file.type
+    if (file.type === "image/heic" || file.type === "image/heif") {
+      contentType = "image/jpeg"
+      console.log("[v0] Setting content type to image/jpeg for HEIC file")
+    }
 
     let uploadedUrl: string
     try {
       const { data, error } = await supabase.storage.from("photos").upload(filename, buffer, {
-        contentType: file.type,
+        contentType: contentType,
         upsert: false,
       })
 
