@@ -228,11 +228,36 @@ function LoveCalendar({ onEventsChange }: LoveCalendarProps) {
         // Call callback to refresh EventCountdown
         onEventsChange?.()
         
+        // Award points for adding event
+        try {
+          await fetch("/api/gamification/points", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              activity_type: "add_event",
+              points: 50,
+              description: `Thêm sự kiện "${newEventTitle}"`,
+            }),
+          })
+          
+          // Update achievement progress
+          await fetch("/api/gamification/achievements", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              achievement_type: "event_on_time",
+              progress_increment: 1,
+            }),
+          })
+        } catch (pointError) {
+          console.error("Error awarding points:", pointError)
+        }
+        
         // Send notification to all users
         const currentUser = localStorage.getItem("lovable_user") || "Đôi ta"
         await addNotification({
           type: "event",
-          message: `${currentUser} đã thêm sự kiện "${newEventTitle}" vào lịch 📅`,
+          message: `${currentUser} đã thêm sự kiện "${newEventTitle}" vào lịch 📅 (+50 điểm 🎉)`,
           author: currentUser,
           target: "Tất cả",
           link: "/love-story"
