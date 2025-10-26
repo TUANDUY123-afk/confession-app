@@ -128,7 +128,17 @@ export default function MultiPhotoUpload({
             throw new Error(`Upload failed: ${errorText}`)
           }
 
-          const data = await response.json()
+          const responseText = await response.text()
+          console.log("[Upload] Response text:", responseText)
+          
+          let data
+          try {
+            data = JSON.parse(responseText)
+          } catch (parseError) {
+            console.error("[Upload] JSON parse error:", parseError, "Response:", responseText)
+            throw new Error("Invalid response from server")
+          }
+          
           console.log("[Upload] Success:", data.url)
           onPhotoUploaded?.(data.url, data.title)
         } catch (fetchError) {
