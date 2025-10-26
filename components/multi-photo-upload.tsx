@@ -103,6 +103,8 @@ export default function MultiPhotoUpload({
         type: "photo",
         message: `${currentUser.name} đã đăng một bức ảnh mới 📸`,
         author: currentUser.name,
+        target: "Tất cả",
+        link: "/photo-wall"
       })
 
       setSelectedPhotos([])

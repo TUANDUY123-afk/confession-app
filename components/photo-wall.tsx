@@ -89,12 +89,11 @@ export default function PhotoWall() {
 
       // Send notification
       const photo = photos.find((p) => p.url === url)
-      const photoOwner = "Của chúng ta" // Có thể lưu owner trong database sau
       await addNotification({
         type: "like",
         message: `${currentUser} đã thích ảnh "${photo?.title || "của bạn"}" ❤️`,
         author: currentUser,
-        target: photoOwner,
+        target: "Tất cả",
         link: "/photo-wall"
       })
     } catch (error) {
@@ -135,12 +134,11 @@ export default function PhotoWall() {
 
       // Send notification
       const photo = photos.find((p) => p.url === url)
-      const photoOwner = "Của chúng ta" // Có thể lưu owner trong database sau
       await addNotification({
         type: "comment",
         message: `${currentUser} đã bình luận về ảnh "${photo?.title || "của bạn"}" 💬`,
         author: currentUser,
-        target: photoOwner,
+        target: "Tất cả",
         link: "/photo-wall"
       })
     } catch (error) {
