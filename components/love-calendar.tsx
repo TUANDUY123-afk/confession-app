@@ -707,6 +707,9 @@ function LoveCalendar({ onEventsChange }: LoveCalendarProps) {
                                 const dayStr = formatDateString(selectedDay)
                                 setSelectedDayEvents(updatedEvents.filter(e => e.date === dayStr))
                                 
+                                // Call callback to refresh EventCountdown
+                                onEventsChange?.()
+                                
                                 // Send notification to all users (in background)
                                 const currentUser = localStorage.getItem("lovable_user") || "Đôi ta"
                                 addNotification({
