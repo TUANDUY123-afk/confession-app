@@ -100,7 +100,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     return () => clearInterval(interval)
   }, [user])
 
-  // 📨 Thêm thông báo mới (chỉ gọi API, không thêm local vì API đã tạo nhiều bản cho từng user)
+  // 📨 Thêm thông báo mới (chỉ gọi API, interval tự động sẽ fetch sau)
   const addNotification = useCallback(async (notification: Omit<Notification, "id" | "timestamp" | "read">) => {
     try {
       const u = await getCurrentUser()
@@ -108,7 +108,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
       console.log("[addNotification] Called with:", notification.link)
       
-      // Chỉ gọi API, không thêm vào local state
+      // Chỉ gọi API, không refetch ngay (interval sẽ tự fetch sau 10s)
       const response = await fetch("/api/notifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -120,17 +120,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       
       const result = await response.json()
       console.log("[addNotification] API response:", result)
-      
-      // Refetch notifications sau 3s để load từ API
-      setTimeout(() => {
-        if (user) {
-          fetchNotifications(user)
-        }
-      }, 3000)
+      // Không refetch ngay, để interval tự fetch
     } catch (err) {
       console.error("addNotification error:", err)
     }
-  }, [user, fetchNotifications])
+  }, [])
 
   // ✅ Đánh dấu 1 thông báo đã đọc (Optimized for instant UX)
   const markAsRead = useCallback(async (id: string) => {
