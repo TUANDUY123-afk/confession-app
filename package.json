@@ -6,8 +6,7 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start",
-    "postinstall": "npm install --legacy-peer-deps || echo 'Install skipped'"
+    "start": "next start"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
