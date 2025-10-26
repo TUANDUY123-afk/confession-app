@@ -119,12 +119,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }),
       })
       
-      // Refetch notifications sau 1s để load từ API
+      // Refetch notifications sau 2s để load từ API (tăng delay để tránh race condition)
       setTimeout(() => {
         if (user) {
           fetchNotifications(user)
         }
-      }, 1000)
+      }, 2000)
     } catch (err) {
       console.error("addNotification error:", err)
     }
