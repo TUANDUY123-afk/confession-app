@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation"
 import ConfessionCard from "@/components/confession-card"
 import FloatingHearts from "@/components/floating-hearts"
 import ConfessionMessage from "@/components/confession-message"
+import VersionBadge from "@/components/version-badge"
 import Link from "next/link"
 
-const APP_VERSION = "v0.1.4"
+const APP_VERSION = "v2"
 
 export default function Home() {
   const [showMessage, setShowMessage] = useState(false)
@@ -21,11 +22,7 @@ export default function Home() {
       text-center px-4 sm:px-6"
     >
       {/* Version tag */}
-      <div className="absolute top-4 left-4 z-50">
-        <span className="bg-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-          {APP_VERSION}
-        </span>
-      </div>
+      <VersionBadge version={APP_VERSION} />
 
       {/* 💞 Hiệu ứng tim bay */}
       <FloatingHearts />
