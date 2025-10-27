@@ -229,45 +229,48 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
       clearTimeout(syncTimeouts[flowerId])
     }
 
-    // Set new timeout to sync after user stops clicking
-    const timeout = setTimeout(async () => {
-      // Get the current pending amount at the time of sync
-      const waterToAdd = pendingSync[flowerId] || 0
-      
-      if (waterToAdd > 0 && onWaterFlower) {
-        try {
-          console.log(`Attempting to sync ${waterToAdd} water to server for ${flowerId}...`)
-          setIsOnline(false) // Mark as offline while syncing
-          
-          // Call API to sync
-          await onWaterFlower(flowerId, waterToAdd)
-          
-          // Clear pending sync only after successful sync
-          setPendingSync(prev => {
-            const newPending = { ...prev }
-            delete newPending[flowerId]
-            return newPending
-          })
-          
-          setIsOnline(true)
-          console.log(`✅ Successfully synced ${waterToAdd} water to server`)
-        } catch (error: unknown) {
-          // If sync fails, keep the pending sync in localStorage for retry later
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-          console.error("Sync failed, will retry later:", errorMessage)
-          console.log("Pending sync saved to localStorage for retry")
-          // Don't revert UI changes - keep them as pending
-          // The data is already saved in localStorage via useEffect
-        }
-      }
+         // Set new timeout to sync after user stops clicking
+     const timeout = setTimeout(async () => {
+       // Get the current pending amount at the time of sync
+       const waterToAdd = pendingSync[flowerId] || 0
+       
+       if (waterToAdd > 0 && onWaterFlower) {
+         try {
+           console.log(`Attempting to sync ${waterToAdd} water to server for ${flowerId}...`)
+           setIsOnline(false) // Mark as offline while syncing
+           
+           // Call API to sync
+           await onWaterFlower(flowerId, waterToAdd)
+           
+           // Clear pending sync only after successful sync
+           setPendingSync(prev => {
+             const newPending = { ...prev }
+             delete newPending[flowerId]
+             return newPending
+           })
+           
+           // Note: flowerWaterData is already updated in handleWaterClick immediately
+           // No need to update again here to avoid double counting
+           
+           setIsOnline(true)
+           console.log(`✅ Successfully synced ${waterToAdd} water to server`)
+         } catch (error: unknown) {
+           // If sync fails, keep the pending sync in localStorage for retry later
+           const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+           console.error("Sync failed, will retry later:", errorMessage)
+           console.log("Pending sync saved to localStorage for retry")
+           // Don't revert UI changes - keep them as pending
+           // The data is already saved in localStorage via useEffect
+         }
+       }
 
-      // Clear timeout
-      setSyncTimeouts(timeoutPrev => {
-        const newTimeouts = { ...timeoutPrev }
-        delete newTimeouts[flowerId]
-        return newTimeouts
-      })
-    }, 300) // Reduced to 300ms for faster sync
+       // Clear timeout
+       setSyncTimeouts(timeoutPrev => {
+         const newTimeouts = { ...timeoutPrev }
+         delete newTimeouts[flowerId]
+         return newTimeouts
+       })
+     }, 300) // Reduced to 300ms for faster sync
 
     setSyncTimeouts(prev => ({ ...prev, [flowerId]: timeout }))
   }

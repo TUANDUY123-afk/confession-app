@@ -184,11 +184,26 @@ export default function GamificationPage() {
         throw new Error(data.error || "Sync failed")
       }
       
-      // Update local state immediately without full refresh to avoid UI jumps
-      setFlowerWaterMap(prev => ({
-        ...prev,
-        [flowerId]: (prev[flowerId] || 0) + waterAmount
-      }))
+      // Sync flower water data from server to ensure accuracy
+      try {
+        const res = await fetch("/api/gamification/flower-points")
+        const flowerData = await res.json()
+        const waterMap: { [key: string]: number } = {}
+        flowerData.forEach((item: any) => {
+          waterMap[item.flower_id] = item.points || 0
+        })
+        
+        // Update local state with server data
+        setFlowerWaterMap(waterMap)
+        console.log("✅ Synced flower water data from server:", waterMap)
+      } catch (syncErr) {
+        console.error("Error syncing flower data:", syncErr)
+        // Fallback: update locally
+        setFlowerWaterMap(prev => ({
+          ...prev,
+          [flowerId]: (prev[flowerId] || 0) + waterAmount
+        }))
+      }
       
       console.log(`✅ Đã tưới ${waterAmount} nước cho hoa! 💧`)
     } catch (err) {
