@@ -627,48 +627,6 @@ export default function GamificationPage() {
         <div className="mb-6" key={`achievements-${refreshKey}`}>
           <AchievementsDisplay />
         </div>
-
-        {/* Info Section */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 border border-pink-200 shadow-md">
-          <h3 className="text-lg font-bold text-pink-600 mb-4">📊 Cách Kiếm Điểm</h3>
-          <div className="space-y-3 text-sm">
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">📅</span>
-              <div>
-                <div className="font-semibold text-gray-800">Tham gia sự kiện đúng giờ</div>
-                <div className="text-gray-600">+50 điểm mỗi sự kiện</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">✍️</span>
-              <div>
-                <div className="font-semibold text-gray-800">Ghi nhật ký sau sự kiện</div>
-                <div className="text-gray-600">+30 điểm</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">📸</span>
-              <div>
-                <div className="font-semibold text-gray-800">Thêm ảnh kỷ niệm</div>
-                <div className="text-gray-600">+10 điểm mỗi ảnh</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">💌</span>
-              <div>
-                <div className="font-semibold text-gray-800">Gửi tin nhắn yêu thương</div>
-                <div className="text-gray-600">+5 điểm mỗi tin nhắn</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="text-2xl">🎯</span>
-              <div>
-                <div className="font-semibold text-gray-800">Mở khóa thành tích</div>
-                <div className="text-gray-600">Bonus 100-500 điểm</div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </main>
   )
