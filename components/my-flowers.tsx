@@ -200,7 +200,7 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
         delete newTimeouts[flowerId]
         return newTimeouts
       })
-    }, 500) // Reduced to 500ms for faster sync
+    }, 300) // Reduced to 300ms for faster sync
 
     setSyncTimeouts(prev => ({ ...prev, [flowerId]: timeout }))
   }

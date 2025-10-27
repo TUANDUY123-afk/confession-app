@@ -6,9 +6,10 @@ import { motion } from "framer-motion"
 
 interface LovePointsDisplayProps {
   refreshKey?: number
+  currentWater?: number  // Add optional prop for real-time water display
 }
 
-export default function LovePointsDisplay({ refreshKey }: LovePointsDisplayProps) {
+export default function LovePointsDisplay({ refreshKey, currentWater }: LovePointsDisplayProps) {
   const [pointsData, setPointsData] = useState({
     water: 0,
     current_streak: 0,
@@ -16,6 +17,13 @@ export default function LovePointsDisplay({ refreshKey }: LovePointsDisplayProps
     coins: 0,
   })
   const [loading, setLoading] = useState(true)
+  
+  // Update water immediately if currentWater prop is provided
+  useEffect(() => {
+    if (currentWater !== undefined) {
+      setPointsData(prev => ({ ...prev, water: currentWater }))
+    }
+  }, [currentWater])
 
   useEffect(() => {
     fetchPoints()

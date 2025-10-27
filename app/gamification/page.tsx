@@ -154,8 +154,16 @@ export default function GamificationPage() {
   }
   
   const handleWaterConsumed = (amount: number) => {
-    // Update local state immediately
-    setTotalPoints(prev => Math.max(0, prev - amount))
+    // Update local state immediately - this triggers UI update
+    setTotalPoints(prev => {
+      const newValue = Math.max(0, prev - amount)
+      console.log("Water consumed:", {
+        prev,
+        amount,
+        newValue
+      })
+      return newValue
+    })
   }
 
   const handleWaterFlower = async (flowerId: string, waterAmount: number) => {
@@ -370,7 +378,7 @@ export default function GamificationPage() {
 
                  {/* Love Points */}
          <div className="mb-6">
-           <LovePointsDisplay refreshKey={refreshKey} />
+           <LovePointsDisplay refreshKey={refreshKey} currentWater={totalPoints} />
          </div>
 
         {/* My Flowers */}
