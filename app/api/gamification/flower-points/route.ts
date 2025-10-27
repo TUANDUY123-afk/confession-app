@@ -53,8 +53,21 @@ export async function POST(request: Request) {
     
     const currentWater = (lovePoints as any)?.water || 0
     
+    console.log("Water check:", {
+      currentWater,
+      water_to_add,
+      hasEnough: water_to_add <= currentWater
+    })
+    
     if (water_to_add > currentWater) {
-      return NextResponse.json({ error: "Không đủ nước để tưới" }, { status: 400 })
+      return NextResponse.json({ 
+        error: "Không đủ nước để tưới",
+        details: {
+          currentWater,
+          water_to_add,
+          needed: water_to_add
+        }
+      }, { status: 400 })
     }
     
     // Get current flower points

@@ -107,10 +107,25 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
   }, [ownedFlowers, totalPoints])
 
   const handleWaterClick = (flowerId: string) => {
-    // Check if has enough water (use localWater for real-time check)
-    if (localWater < 10) {
+    // Check if has enough water, considering ALL pending syncs across all flowers
+    const totalPendingAcrossAllFlowers = Object.values(pendingSync).reduce((sum, val) => sum + val, 0)
+    const availableWater = localWater - totalPendingAcrossAllFlowers
+    
+    console.log("Water check:", {
+      localWater,
+      totalPendingAcrossAllFlowers,
+      availableWater,
+      canWater: availableWater >= 10
+    })
+    
+    if (availableWater < 10) {
+      console.log("Not enough water to water")
       return
     }
+
+    // Get pending amount BEFORE adding to avoid race condition
+    const currentPending = pendingSync[flowerId] || 0
+    const newPending = currentPending + 10
 
     // Update UI immediately - add water to flower
     setFlowerWaterData(prev => ({
@@ -119,7 +134,11 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
     }))
 
     // Decrement local water immediately
-    setLocalWater(prev => prev - 10)
+    setLocalWater(prev => {
+      const newWater = prev - 10
+      console.log("Decrementing water:", prev, "->", newWater)
+      return newWater
+    })
 
     // Notify parent about water consumption
     if (onWaterConsumed) {
@@ -129,7 +148,7 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
     // Track pending sync
     setPendingSync(prev => ({
       ...prev,
-      [flowerId]: (prev[flowerId] || 0) + 10
+      [flowerId]: newPending
     }))
 
     // Clear existing timeout for this flower
