@@ -1,9 +1,12 @@
 name: Auto Version Increment
 
 on:
-  push:
-    branches:
-      - main
+  # TẮT auto-trigger - chỉ chạy khi bấm nút "Run workflow" trong GitHub
+  # push:
+  #   branches:
+  #     - main
+  
+  workflow_dispatch:  # Chỉ chạy manual
 
 jobs:
   increment-version:
