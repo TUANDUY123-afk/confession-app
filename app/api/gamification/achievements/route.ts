@@ -6,44 +6,44 @@ const COUPLE_ID = "default_couple"
 // Achievement definitions
 export const ACHIEVEMENTS = [
   {
-    type: "event_on_time",
-    name: "Cặp đôi đúng giờ",
-    description: "Tham gia 5 sự kiện liên tiếp đúng giờ",
-    icon: "🕒",
-    target: 5,
-    points_reward: 100,
-  },
-  {
-    type: "daily_message",
-    name: "Ngọt ngào mỗi ngày",
-    description: "Gửi tin nhắn yêu thương 7 ngày liên tục",
-    icon: "💌",
+    type: "daily_diary",
+    name: "Người viết nhật ký",
+    description: "Viết nhật ký 7 ngày liên tục",
+    icon: "📝",
     target: 7,
     points_reward: 150,
   },
   {
-    type: "100_days_streak",
-    name: "100 ngày không quên hẹn",
-    description: "Không bỏ lỡ sự kiện nào trong 100 ngày",
-    icon: "🏅",
-    target: 100,
-    points_reward: 500,
+    type: "like_master",
+    name: "Trái tim nồng nàn",
+    description: "Like 50 bài nhật ký",
+    icon: "❤️",
+    target: 50,
+    points_reward: 100,
   },
   {
-    type: "tree_level_4",
-    name: "Cây tình yêu nở hoa",
-    description: "Cây đạt cấp độ 4",
-    icon: "🌸",
-    target: 1,
+    type: "comment_king",
+    name: "Bình luận viên",
+    description: "Comment 30 bài nhật ký",
+    icon: "💬",
+    target: 30,
     points_reward: 200,
   },
   {
     type: "photo_collector",
     name: "Người kể chuyện",
-    description: "Thêm 20 ảnh vào timeline",
-    icon: "📷",
+    description: "Upload 20 ảnh kỷ niệm",
+    icon: "📸",
     target: 20,
     points_reward: 300,
+  },
+  {
+    type: "love_garden_bloom",
+    name: "Vườn tình yêu nở hoa",
+    description: "Hoa đạt giai đoạn Nở Rộ",
+    icon: "🌺",
+    target: 3,
+    points_reward: 250,
   },
 ]
 
@@ -127,10 +127,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     
-    // If unlocked, award bonus points
+    // If unlocked, award bonus water
     if (isUnlocked) {
       await supabase.from("love_points").update({
-        total_points: supabase.raw(`total_points + ${achievementDef.points_reward}`),
+        water: supabase.raw(`water + ${achievementDef.points_reward}`),
       }).eq("couple_id", COUPLE_ID)
       
       // Log the points
