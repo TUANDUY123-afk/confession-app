@@ -79,6 +79,7 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
   const [syncTimeouts, setSyncTimeouts] = useState<{ [key: string]: NodeJS.Timeout }>({})
   const [localWater, setLocalWater] = useState(currentWater)
   const [isOnline, setIsOnline] = useState(true)
+  const [globalSyncTimeout, setGlobalSyncTimeout] = useState<NodeJS.Timeout | null>(null)
   const PENDING_SYNC_KEY = 'pending_water_sync'
 
   // Sync local water with parent
@@ -218,61 +219,64 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
       onWaterConsumed(10)
     }
 
-    // Track pending sync
+        // Track pending sync
     setPendingSync(prev => ({
       ...prev,
       [flowerId]: newPending
     }))
 
-    // Clear existing timeout for this flower
-    if (syncTimeouts[flowerId]) {
-      clearTimeout(syncTimeouts[flowerId])
+    // Clear existing global sync timeout
+    if (globalSyncTimeout) {
+      clearTimeout(globalSyncTimeout)
     }
 
-         // Set new timeout to sync after user stops clicking
-     const timeout = setTimeout(async () => {
-       // Get the current pending amount at the time of sync
-       const waterToAdd = pendingSync[flowerId] || 0
-       
-       if (waterToAdd > 0 && onWaterFlower) {
-         try {
-           console.log(`Attempting to sync ${waterToAdd} water to server for ${flowerId}...`)
-           setIsOnline(false) // Mark as offline while syncing
-           
-           // Call API to sync
-           await onWaterFlower(flowerId, waterToAdd)
-           
-           // Clear pending sync only after successful sync
-           setPendingSync(prev => {
-             const newPending = { ...prev }
-             delete newPending[flowerId]
-             return newPending
-           })
-           
-           // Note: flowerWaterData is already updated in handleWaterClick immediately
-           // No need to update again here to avoid double counting
-           
-           setIsOnline(true)
-           console.log(`✅ Successfully synced ${waterToAdd} water to server`)
-         } catch (error: unknown) {
-           // If sync fails, keep the pending sync in localStorage for retry later
-           const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-           console.error("Sync failed, will retry later:", errorMessage)
-           console.log("Pending sync saved to localStorage for retry")
-           // Don't revert UI changes - keep them as pending
-           // The data is already saved in localStorage via useEffect
-         }
-       }
+    // Set new global timeout to sync ALL flowers after user stops clicking for 1 second
+    const timeout = setTimeout(() => {
+      // Use callback pattern to get the latest pendingSync state
+      setPendingSync(currentPendingSync => {
+        const flowerIds = Object.keys(currentPendingSync)
+        
+        if (flowerIds.length > 0 && onWaterFlower) {
+          console.log("Syncing all flowers with batched amounts:", currentPendingSync)
+          
+          // Sync all flowers one by one with batched amounts
+          const syncPromises = flowerIds.map(async (flowerId) => {
+            const waterToAdd = currentPendingSync[flowerId]
+            if (waterToAdd > 0) {
+              try {
+                console.log(`Syncing batched ${waterToAdd} water to ${flowerId}...`)
+                await onWaterFlower(flowerId, waterToAdd)
+                
+                console.log(`✅ Successfully synced ${waterToAdd} water to ${flowerId}`)
+                return { flowerId, success: true }
+              } catch (error: unknown) {
+                const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+                console.error(`Failed to sync ${flowerId}:`, errorMessage)
+                return { flowerId, success: false }
+              }
+            }
+            return { flowerId, success: true }
+          })
+          
+          // Wait for all syncs to complete, then clear successful ones
+          Promise.all(syncPromises).then(results => {
+            setPendingSync(prev => {
+              const newPending = { ...prev }
+              results.forEach(({ flowerId, success }) => {
+                if (success) {
+                  delete newPending[flowerId]
+                }
+              })
+              return newPending
+            })
+          })
+        }
+        
+        return currentPendingSync
+      })
+    }, 1000) // 1 second delay for all flowers
 
-       // Clear timeout
-       setSyncTimeouts(timeoutPrev => {
-         const newTimeouts = { ...timeoutPrev }
-         delete newTimeouts[flowerId]
-         return newTimeouts
-       })
-     }, 300) // Reduced to 300ms for faster sync
-
-    setSyncTimeouts(prev => ({ ...prev, [flowerId]: timeout }))
+    setGlobalSyncTimeout(timeout)
   }
 
   const getFlowerStage = (flower: Flower, points: number) => {
@@ -453,7 +457,7 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
                           disabled={!hasEnoughWater}
                           className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-3 py-1 rounded-lg text-sm font-semibold transition flex items-center gap-1"
                         >
-                          {hasPendingSync ? '⏳ Đang đồng bộ...' : '💧 Tưới 10'}
+                          💧 Tưới 10
                         </button>
                       )}
                     </div>
