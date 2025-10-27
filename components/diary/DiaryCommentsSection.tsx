@@ -88,7 +88,7 @@ export default function DiaryCommentsSection({
             headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             type: "diary",
-            message: `${currentUser?.name || "Ẩn danh"} đã bình luận trong nhật ký "${entry?.title || "của bạn"}" 💬`,
+            message: `${currentUser?.name || "Ẩn danh"} đã bình luận trong nhật ký "${entry?.title || "của bạn"}" 💬 (+5 nước 💧)`,
             author: currentUser?.name || "Ẩn danh",
             target: entryAuthor,
             link: "/shared-diary",

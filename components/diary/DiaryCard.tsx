@@ -68,7 +68,7 @@ function DiaryCard({ entry, onDelete, currentUserName }: DiaryCardProps) {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               type: "diary",
-              message: `${currentUserName} đã thả tim cho nhật ký "${entry.title}" ❤️`,
+              message: `${currentUserName} đã thả tim cho nhật ký "${entry.title}" ❤️ (+3 nước 💧)`,
               author: currentUserName,
               target: entry.author,
               link: "/shared-diary",

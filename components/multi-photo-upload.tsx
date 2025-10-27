@@ -187,16 +187,16 @@ export default function MultiPhotoUpload({
         onPhotoUploaded?.(uploadedUrl, uploadedTitle)
       }
 
-      // Award points for uploading photos
-      const pointsToAward = selectedPhotos.length * 10 // 10 points per photo
+      // Award water for uploading photos
+      const waterToAward = selectedPhotos.length * 10 // 10 water per photo
       try {
         await fetch("/api/gamification/points", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             activity_type: "upload_photo",
-            points: pointsToAward,
-            description: `Đăng ${selectedPhotos.length} ảnh`,
+            points: waterToAward,
+            description: `Đăng ${selectedPhotos.length} ảnh +${waterToAward} nước 💧`,
           }),
         })
         
@@ -210,14 +210,14 @@ export default function MultiPhotoUpload({
           }),
         })
       } catch (pointError) {
-        console.error("Error awarding points:", pointError)
+        console.error("Error awarding water:", pointError)
       }
 
       // ✅ Gửi thông báo sau khi tải ảnh thành công (chỉ 1 lần cho toàn bộ upload)
       const userName = currentUserName || "Người yêu"
       await addNotification({
         type: "photo",
-        message: `${userName} đã đăng ${selectedPhotos.length > 1 ? selectedPhotos.length + ' bức ảnh mới' : 'một bức ảnh mới'} 📸 (+${pointsToAward} điểm 🎉)`,
+        message: `${userName} đã đăng ${selectedPhotos.length > 1 ? selectedPhotos.length + ' bức ảnh mới' : 'một bức ảnh mới'} 📸 (+${waterToAward} nước 💧)`,
         author: userName,
         target: "Tất cả",
         link: "/photo-wall"

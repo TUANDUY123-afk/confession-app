@@ -99,6 +99,21 @@ export async function POST(request: NextRequest) {
         { entry_id: entryId, user_name: userName }
       ])
       liked = true
+      
+      // Award water points for liking
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/gamification/points`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            activity_type: 'like_diary',
+            points: 3,
+            description: 'Like nhật ký +3 nước 💧'
+          })
+        })
+      } catch (err) {
+        console.error('Error awarding water for like:', err)
+      }
     }
 
     // Get updated count

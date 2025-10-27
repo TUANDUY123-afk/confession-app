@@ -69,6 +69,21 @@ export async function POST(req: Request) {
       throw error
     }
     
+    // Award water points for commenting
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/gamification/points`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          activity_type: 'comment_diary',
+          points: 5,
+          description: 'Comment nhật ký +5 nước 💧'
+        })
+      })
+    } catch (err) {
+      console.error('Error awarding water for comment:', err)
+    }
+    
     // Return in format expected by frontend
     const commentData = {
       id: data.id,
