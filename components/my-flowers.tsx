@@ -78,11 +78,84 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
   const [pendingSync, setPendingSync] = useState<{ [key: string]: number }>({})
   const [syncTimeouts, setSyncTimeouts] = useState<{ [key: string]: NodeJS.Timeout }>({})
   const [localWater, setLocalWater] = useState(currentWater)
+  const [isOnline, setIsOnline] = useState(true)
+  const PENDING_SYNC_KEY = 'pending_water_sync'
 
   // Sync local water with parent
   useEffect(() => {
     setLocalWater(currentWater)
   }, [currentWater])
+
+  // Load pending syncs from localStorage on mount
+  useEffect(() => {
+    const loadPendingSyncs = () => {
+      try {
+        const stored = localStorage.getItem(PENDING_SYNC_KEY)
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          console.log("Loaded pending syncs from localStorage:", parsed)
+          setPendingSync(parsed)
+        }
+      } catch (err) {
+        console.error("Error loading pending syncs:", err)
+      }
+    }
+    loadPendingSyncs()
+  }, [])
+
+  // Save pending syncs to localStorage whenever it changes
+  useEffect(() => {
+    if (Object.keys(pendingSync).length > 0) {
+      try {
+        localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pendingSync))
+        console.log("Saved pending syncs to localStorage:", pendingSync)
+      } catch (err) {
+        console.error("Error saving pending syncs:", err)
+      }
+    } else {
+      // Clear localStorage when no pending syncs
+      localStorage.removeItem(PENDING_SYNC_KEY)
+    }
+  }, [pendingSync])
+
+  // Retry sync for pending items when component mounts
+  useEffect(() => {
+    const retryPendingSyncs = async () => {
+      const pendingFlowerIds = Object.keys(pendingSync)
+      if (pendingFlowerIds.length === 0 || !onWaterFlower) {
+        return
+      }
+
+      console.log("Retrying pending syncs:", pendingFlowerIds)
+      
+      for (const flowerId of pendingFlowerIds) {
+        const waterToAdd = pendingSync[flowerId]
+        if (waterToAdd > 0) {
+          try {
+            console.log(`Retrying sync for ${flowerId} with ${waterToAdd} water...`)
+            await onWaterFlower(flowerId, waterToAdd)
+            
+            // Clear pending sync after successful retry
+            setPendingSync(prev => {
+              const newPending = { ...prev }
+              delete newPending[flowerId]
+              return newPending
+            })
+            
+            console.log(`✅ Successfully synced ${flowerId} on retry`)
+          } catch (error) {
+            console.error(`Failed to retry sync for ${flowerId}:`, error)
+            // Keep in pending for next retry
+          }
+        }
+      }
+    }
+
+    // Retry after a short delay to ensure component is fully mounted
+    const timeout = setTimeout(retryPendingSyncs, 1000)
+    return () => clearTimeout(timeout)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Fetch flower water data
   useEffect(() => {
@@ -163,6 +236,9 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
       
       if (waterToAdd > 0 && onWaterFlower) {
         try {
+          console.log(`Attempting to sync ${waterToAdd} water to server for ${flowerId}...`)
+          setIsOnline(false) // Mark as offline while syncing
+          
           // Call API to sync
           await onWaterFlower(flowerId, waterToAdd)
           
@@ -172,25 +248,16 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
             delete newPending[flowerId]
             return newPending
           })
-        } catch (error: unknown) {
-          // If sync fails, revert the UI changes
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-          console.error("Sync failed, reverting UI:", errorMessage)
-          setFlowerWaterData(flowerPrev => ({
-            ...flowerPrev,
-            [flowerId]: Math.max(0, (flowerPrev[flowerId] || 0) - waterToAdd)
-          }))
-          setLocalWater(waterPrev => waterPrev + waterToAdd)
-          if (onWaterConsumed) {
-            onWaterConsumed(-waterToAdd) // Revert the consumption
-          }
           
-          // Clear pending sync even on error
-          setPendingSync(errorPrev => {
-            const newPending = { ...errorPrev }
-            delete newPending[flowerId]
-            return newPending
-          })
+          setIsOnline(true)
+          console.log(`✅ Successfully synced ${waterToAdd} water to server`)
+        } catch (error: unknown) {
+          // If sync fails, keep the pending sync in localStorage for retry later
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          console.error("Sync failed, will retry later:", errorMessage)
+          console.log("Pending sync saved to localStorage for retry")
+          // Don't revert UI changes - keep them as pending
+          // The data is already saved in localStorage via useEffect
         }
       }
 
@@ -419,9 +486,18 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mt-4 text-center text-xs text-gray-600 bg-white/60 rounded-lg p-3"
+        className="mt-4 space-y-2"
       >
-        💡 Tip: Tưới nước cho hoa để phát triển! Nước: {localWater} 💧
+        {/* Status indicator */}
+        {Object.keys(pendingSync).length > 0 && (
+          <div className="text-center text-xs text-orange-600 bg-orange-50 rounded-lg p-2 border border-orange-200">
+            📦 {Object.keys(pendingSync).length} thay đổi đang chờ đồng bộ...
+          </div>
+        )}
+        
+        <div className="text-center text-xs text-gray-600 bg-white/60 rounded-lg p-3">
+          💡 Tip: Tưới nước cho hoa để phát triển! Nước: {localWater} 💧
+        </div>
       </motion.div>
     </motion.div>
   )
