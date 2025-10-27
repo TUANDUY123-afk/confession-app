@@ -1,0 +1,9 @@
+{
+  "git.autoAdd": false,
+  "git.autoCommit": false,
+  "git.autoPush": false,
+  "git.autofetch": false,
+  "cursor.general.autoCommands": false,
+  "cursor.general.askBeforeRunningCommands": true
+}
+

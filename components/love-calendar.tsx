@@ -361,10 +361,17 @@ function LoveCalendar({ onEventsChange }: LoveCalendarProps) {
   }
   
   const calcDaysUntil = (date: string) => {
+    // Parse date string (YYYY-MM-DD) and create date objects at midnight
+    const [year, month, day] = date.split('-').map(Number)
+    const eventDate = new Date(year, month - 1, day)
     const today = new Date()
-    const eventDate = new Date(date)
-    // Sử dụng Math.floor thay vì Math.ceil để không bị lệch 1 ngày
-    return Math.floor((eventDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+    today.setHours(0, 0, 0, 0) // Set today to midnight
+    eventDate.setHours(0, 0, 0, 0) // Set event date to midnight
+    
+    const diffTime = eventDate.getTime() - today.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    
+    return diffDays
   }
 
   const monthNames = [
