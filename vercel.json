@@ -9,6 +9,11 @@
       "maxDuration": 60,
       "memory": 1024
     }
+  },
+  "git": {
+    "deploymentEnabled": {
+      "main": false
+    }
   }
 }
 
