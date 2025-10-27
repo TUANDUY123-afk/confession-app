@@ -361,40 +361,44 @@ export default function GamificationPage() {
             Kiếm điểm, phát triển cây tình yêu và mở khóa thành tích!
           </p>
           
-          {/* Test Buttons */}
-          <div className="flex gap-2 justify-center flex-wrap">
-            <button
-              onClick={() => handleAddTestWater(10)}
-              className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600 transition font-semibold flex items-center gap-1"
-            >
-              💧 +10
-            </button>
-            <button
-              onClick={() => handleAddTestWater(50)}
-              className="bg-cyan-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-cyan-600 transition font-semibold flex items-center gap-1"
-            >
-              💧 +50
-            </button>
-            <button
-              onClick={() => handleAddTestWater(100)}
-              className="bg-teal-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-teal-600 transition font-semibold flex items-center gap-1"
-            >
-              💧 +100
-            </button>
-            <button
-              onClick={() => handleAddTestWater(1000)}
-              className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-3 py-1.5 rounded-lg text-sm hover:from-blue-600 hover:to-cyan-600 transition font-bold flex items-center gap-1"
-            >
-              💧 +1000
-            </button>
-            <button
-              onClick={handleResetPoints}
-              className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition font-semibold"
-            >
-              🔄 Reset
-            </button>
-          </div>
-          <p className="text-xs text-gray-500 mt-2">🧪 Test buttons - Thêm nước</p>
+          {/* Test Buttons - TẠM TẮT */}
+          {false && (
+            <>
+              <div className="flex gap-2 justify-center flex-wrap">
+                <button
+                  onClick={() => handleAddTestWater(10)}
+                  className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600 transition font-semibold flex items-center gap-1"
+                >
+                  💧 +10
+                </button>
+                <button
+                  onClick={() => handleAddTestWater(50)}
+                  className="bg-cyan-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-cyan-600 transition font-semibold flex items-center gap-1"
+                >
+                  💧 +50
+                </button>
+                <button
+                  onClick={() => handleAddTestWater(100)}
+                  className="bg-teal-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-teal-600 transition font-semibold flex items-center gap-1"
+                >
+                  💧 +100
+                </button>
+                <button
+                  onClick={() => handleAddTestWater(1000)}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-3 py-1.5 rounded-lg text-sm hover:from-blue-600 hover:to-cyan-600 transition font-bold flex items-center gap-1"
+                >
+                  💧 +1000
+                </button>
+                <button
+                  onClick={handleResetPoints}
+                  className="bg-red-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-red-600 transition font-semibold"
+                >
+                  🔄 Reset
+                </button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">🧪 Test buttons - Thêm nước</p>
+            </>
+          )}
         </div>
 
                  {/* Love Points */}

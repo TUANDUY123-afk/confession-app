@@ -125,11 +125,11 @@ export default function SharedDiaryPage() {
 
       <button
         onClick={() => setShowModal(true)}
-        className="relative z-20 fixed bottom-20 right-6 w-14 h-14 flex items-center justify-center 
+        className="relative z-20 fixed bottom-6 right-6 w-16 h-16 flex items-center justify-center 
                    rounded-full bg-gradient-to-r from-pink-500 to-rose-400 
-                   text-white shadow-lg hover:scale-110 transition-transform"
+                   text-white shadow-xl hover:scale-110 transition-transform animate-bounce-slow"
       >
-        <PlusCircle className="w-7 h-7" />
+        <PlusCircle className="w-8 h-8" />
       </button>
 
       {showModal && (
