@@ -666,11 +666,7 @@ function LoveCalendar({ onEventsChange }: LoveCalendarProps) {
             <DialogContent className="max-h-[85vh] overflow-hidden flex flex-col">
               <DialogHeader className="flex-shrink-0">
                 <DialogTitle>
-                  Sự kiện ngày {selectedDay.toLocaleDateString("vi-VN", {
-                    day: "numeric",
-                    month: "long",
-                    year: "numeric",
-                  })}
+                  Sự kiện ngày {formatDateString(selectedDay)}
                 </DialogTitle>
                 <DialogDescription>
                   {selectedDayEvents.length} sự kiện
