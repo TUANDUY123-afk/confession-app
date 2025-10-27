@@ -354,11 +354,11 @@ export default function GamificationPage() {
 
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-pink-600 mb-2">
-            🎮 Hệ Thống Gamification
+          <h1 className="text-3xl font-bold text-green-600 mb-2">
+            🌸 Vườn Tình Yêu
           </h1>
           <p className="text-gray-600 mb-4">
-            Kiếm điểm, phát triển cây tình yêu và mở khóa thành tích!
+            Chăm sóc hoa, kiếm nước, mở khóa thành tích!
           </p>
           
           {/* Cách kiếm điểm */}

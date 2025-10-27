@@ -145,7 +145,8 @@ export async function POST(request: Request) {
       
       const result = await supabase
         .from("love_points")
-        .update(updateData as any)
+        // @ts-ignore - Supabase type inference issue
+        .update(updateData)
         .eq("couple_id", COUPLE_ID)
         .select()
         .single()
@@ -177,7 +178,8 @@ export async function POST(request: Request) {
       
       const result = await supabase
         .from("love_points")
-        .insert(insertData as any)
+        // @ts-ignore - Supabase type inference issue
+        .insert(insertData)
         .select()
         .single()
       data = result.data
@@ -224,24 +226,26 @@ export async function POST(request: Request) {
           console.log("Updating existing record to 0 points")
           await supabase
             .from("flower_points")
+            // @ts-ignore - Supabase type inference issue
             .update({
               points: 0,
               purchased_at: purchasedAt, // Set purchase timestamp
               last_updated: purchasedAt,
-            } as any)
+            })
             .eq("couple_id", COUPLE_ID)
             .eq("flower_id", owned_flower)
         } else {
           console.log("Inserting new record with 0 points")
           await supabase
             .from("flower_points")
+            // @ts-ignore - Supabase type inference issue
             .insert({
               couple_id: COUPLE_ID,
               flower_id: owned_flower,
               points: 0,
               purchased_at: purchasedAt, // Set purchase timestamp
               last_updated: purchasedAt,
-            } as any)
+            })
         }
         
         console.log("=== FLOWER RESET COMPLETE ===")

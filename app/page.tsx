@@ -68,7 +68,7 @@ export default function Home() {
           shadow hover:bg-rose-500 active:scale-95 transition-all duration-200 
           text-sm sm:text-base"
         >
-          📖 Chuyện tình
+          📖 Sự kiện
         </Link>
         <Link
           href="/photo-wall"
@@ -76,7 +76,7 @@ export default function Home() {
           shadow hover:bg-purple-500 active:scale-95 transition-all duration-200 
           text-sm sm:text-base"
         >
-          📸 Tường ảnh
+          📸 Ảnh chung 
         </Link>
         <Link
           href="/shared-diary"
@@ -92,7 +92,7 @@ export default function Home() {
           shadow hover:from-yellow-500 hover:to-orange-600 active:scale-95 transition-all duration-200 
           text-sm sm:text-base font-bold"
         >
-          🎮 Gamification
+         🌺 Chăm hoa 
         </Link>
       </div>
 
