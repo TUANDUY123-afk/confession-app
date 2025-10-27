@@ -172,17 +172,20 @@ export default function GamificationPage() {
       const data = await response.json()
       
       if (!response.ok) {
-        // If sync fails, we need to rollback local changes
-        // For now, just log the error
-        console.error("Sync error:", data.error)
-        return
+        // If sync fails, throw error to trigger rollback in MyFlowers component
+        throw new Error(data.error || "Sync failed")
       }
       
-      // Refresh all components to get actual state from server
-      setRefreshKey(prev => prev + 1)
+      // Update local state immediately without full refresh to avoid UI jumps
+      setFlowerWaterMap(prev => ({
+        ...prev,
+        [flowerId]: (prev[flowerId] || 0) + waterAmount
+      }))
+      
       console.log(`✅ Đã tưới ${waterAmount} nước cho hoa! 💧`)
     } catch (err) {
       console.error("Error watering flower:", err)
+      throw err // Re-throw to trigger rollback in MyFlowers
     }
   }
 

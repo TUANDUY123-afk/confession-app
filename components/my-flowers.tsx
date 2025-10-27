@@ -139,27 +139,49 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
 
     // Set new timeout to sync after user stops clicking
     const timeout = setTimeout(async () => {
+      // Get the current pending amount at the time of sync
       const waterToAdd = pendingSync[flowerId] || 0
       
       if (waterToAdd > 0 && onWaterFlower) {
-        // Call API to sync
-        onWaterFlower(flowerId, waterToAdd)
-        
-        // Clear pending sync
-        setPendingSync(prev => {
-          const newPending = { ...prev }
-          delete newPending[flowerId]
-          return newPending
-        })
+        try {
+          // Call API to sync
+          await onWaterFlower(flowerId, waterToAdd)
+          
+          // Clear pending sync only after successful sync
+          setPendingSync(prev => {
+            const newPending = { ...prev }
+            delete newPending[flowerId]
+            return newPending
+          })
+        } catch (error: unknown) {
+          // If sync fails, revert the UI changes
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          console.error("Sync failed, reverting UI:", errorMessage)
+          setFlowerWaterData(flowerPrev => ({
+            ...flowerPrev,
+            [flowerId]: Math.max(0, (flowerPrev[flowerId] || 0) - waterToAdd)
+          }))
+          setLocalWater(waterPrev => waterPrev + waterToAdd)
+          if (onWaterConsumed) {
+            onWaterConsumed(-waterToAdd) // Revert the consumption
+          }
+          
+          // Clear pending sync even on error
+          setPendingSync(errorPrev => {
+            const newPending = { ...errorPrev }
+            delete newPending[flowerId]
+            return newPending
+          })
+        }
       }
 
       // Clear timeout
-      setSyncTimeouts(prev => {
-        const newTimeouts = { ...prev }
+      setSyncTimeouts(timeoutPrev => {
+        const newTimeouts = { ...timeoutPrev }
         delete newTimeouts[flowerId]
         return newTimeouts
       })
-    }, 800) // Wait 800ms after last click
+    }, 500) // Reduced to 500ms for faster sync
 
     setSyncTimeouts(prev => ({ ...prev, [flowerId]: timeout }))
   }
