@@ -87,9 +87,10 @@ export default function GamificationPage() {
        // IMPORTANT: We need to check per flower, not globally
        // So we need to track claimed stages per flower
        // For now, we'll track globally by combining flowerId and stageIndex
+       const flowerPoints = flowerWaterMap[flowerId] || 0 // Use flower-specific points
        for (let i = 1; i <= 3; i++) {
          const claimId = `${flowerId}_${i}` // Create unique claim ID
-         if (totalPoints >= thresholds[i] && !claimedStages.includes(claimId)) {
+         if (flowerPoints >= thresholds[i] && !claimedStages.includes(claimId)) {
            claims.push({
              flowerId,
              flowerName: flowerNames[flowerId] || flowerId,
@@ -466,7 +467,7 @@ export default function GamificationPage() {
                 <div className="space-y-6">
                   {/* Love Tree */}
                   <LoveTree 
-                    totalPoints={totalPoints} 
+                    totalPoints={flowerWaterMap[selectedFlowerDetail] || 0} 
                     currentFlower={selectedFlowerDetail} 
                   />
                   
