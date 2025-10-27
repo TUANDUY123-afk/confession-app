@@ -361,6 +361,43 @@ export default function GamificationPage() {
             Kiếm điểm, phát triển cây tình yêu và mở khóa thành tích!
           </p>
           
+          {/* Cách kiếm điểm */}
+          <div className="mb-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-4 border border-blue-200">
+            <h3 className="text-lg font-bold text-blue-600 mb-3 flex items-center gap-2">
+              💡 Cách kiếm nước
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="bg-white rounded-xl p-3 flex items-center gap-3 shadow-sm">
+                <div className="text-2xl">❤️</div>
+                <div>
+                  <div className="font-semibold text-gray-800">Like nhật ký</div>
+                  <div className="text-sm text-blue-600">+3 nước 💧</div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl p-3 flex items-center gap-3 shadow-sm">
+                <div className="text-2xl">💬</div>
+                <div>
+                  <div className="font-semibold text-gray-800">Comment</div>
+                  <div className="text-sm text-blue-600">+5 nước 💧</div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl p-3 flex items-center gap-3 shadow-sm">
+                <div className="text-2xl">📝</div>
+                <div>
+                  <div className="font-semibold text-gray-800">Viết nhật ký</div>
+                  <div className="text-sm text-blue-600">+20 nước 💧</div>
+                </div>
+              </div>
+              <div className="bg-white rounded-xl p-3 flex items-center gap-3 shadow-sm">
+                <div className="text-2xl">📸</div>
+                <div>
+                  <div className="font-semibold text-gray-800">Upload ảnh</div>
+                  <div className="text-sm text-blue-600">+10 nước/ảnh 💧</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
           {/* Test Buttons - TẠM TẮT */}
           {false && (
             <>
