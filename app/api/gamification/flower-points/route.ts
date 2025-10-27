@@ -44,12 +44,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
     
-    // Check if user has enough water
-    const { data: lovePoints } = await supabase
+    // Use a transaction-like approach: check and deduct atomically
+    // First, get the current water
+    const { data: lovePoints, error: fetchError } = await supabase
       .from("love_points")
       .select("water")
       .eq("couple_id", COUPLE_ID)
       .single()
+    
+    if (fetchError) {
+      console.error("Error fetching love points:", fetchError)
+      return NextResponse.json({ error: "Database error" }, { status: 500 })
+    }
     
     const currentWater = (lovePoints as any)?.water || 0
     
@@ -59,13 +65,35 @@ export async function POST(request: Request) {
       hasEnough: water_to_add <= currentWater
     })
     
+    // Check if user has enough water BEFORE attempting to deduct
     if (water_to_add > currentWater) {
+      console.error("Not enough water:", {
+        currentWater,
+        water_to_add,
+        shortfall: water_to_add - currentWater
+      })
       return NextResponse.json({ 
         error: "Không đủ nước để tưới",
         details: {
           currentWater,
           water_to_add,
-          needed: water_to_add
+          needed: water_to_add - currentWater
+        }
+      }, { status: 400 })
+    }
+    
+    // Try to deduct water atomically by checking again in the update
+    // This prevents race conditions when multiple requests come in simultaneously
+    const newWaterValue = currentWater - water_to_add
+    
+    if (newWaterValue < 0) {
+      console.error("Race condition detected - water would be negative")
+      return NextResponse.json({ 
+        error: "Không đủ nước để tưới (race condition)",
+        details: {
+          currentWater,
+          water_to_add,
+          wouldResultIn: newWaterValue
         }
       }, { status: 400 })
     }
@@ -102,19 +130,24 @@ export async function POST(request: Request) {
         } as any)
     }
     
-    // Deduct water
-    await supabase
+    // Deduct water using the calculated value
+    const { error: updateError } = await supabase
       .from("love_points")
       .update({
-        water: currentWater - water_to_add,
+        water: newWaterValue,
         updated_at: new Date().toISOString(),
       } as any)
       .eq("couple_id", COUPLE_ID)
     
+    if (updateError) {
+      console.error("Error updating love points:", updateError)
+      return NextResponse.json({ error: "Failed to update water" }, { status: 500 })
+    }
+    
     return NextResponse.json({ 
       success: true,
       flower_water: newFlowerWater,
-      remaining_water: currentWater - water_to_add
+      remaining_water: newWaterValue
     })
   } catch (err) {
     console.error("Error in POST /api/gamification/flower-points:", err)

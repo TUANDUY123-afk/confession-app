@@ -184,6 +184,12 @@ export default function GamificationPage() {
         throw new Error(data.error || "Sync failed")
       }
       
+      // Update total water from server response
+      if (data.remaining_water !== undefined) {
+        setTotalPoints(data.remaining_water)
+        console.log("Updated total water from server:", data.remaining_water)
+      }
+      
       // Sync flower water data from server to ensure accuracy
       try {
         const res = await fetch("/api/gamification/flower-points")

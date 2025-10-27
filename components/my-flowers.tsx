@@ -80,12 +80,47 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
   const [localWater, setLocalWater] = useState(currentWater)
   const [isOnline, setIsOnline] = useState(true)
   const [globalSyncTimeout, setGlobalSyncTimeout] = useState<NodeJS.Timeout | null>(null)
+  const [waterToDeduct, setWaterToDeduct] = useState(0)
   const PENDING_SYNC_KEY = 'pending_water_sync'
 
-  // Sync local water with parent
+  // Sync local water with parent ONLY when component mounts
+  // Don't sync automatically on every currentWater change to prevent race conditions
   useEffect(() => {
+    console.log("🏗️ MyFlowers mounted, initializing localWater with:", currentWater)
     setLocalWater(currentWater)
-  }, [currentWater])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Empty dependency array - only run on mount
+  
+  // Sync when currentWater increases (e.g., test buttons, but not during watering)
+  useEffect(() => {
+    if (currentWater > localWater) {
+      // Only sync if currentWater is higher (meaning water was added externally)
+      console.log("💧 External water added, syncing:", { currentWater, localWater })
+      setLocalWater(currentWater)
+    } else if (currentWater !== localWater) {
+      console.log("⚠️ Water mismatch but not syncing to prevent race:", { currentWater, localWater })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentWater]) // Sync when water increases externally
+
+  // Handle water deduction in a separate effect
+  useEffect(() => {
+    if (waterToDeduct > 0) {
+      setLocalWater(prev => {
+        const newWater = Math.max(0, prev - waterToDeduct)
+        console.log(`Deducted ${waterToDeduct} water, new total: ${newWater}`)
+        return newWater
+      })
+      
+      // Notify parent
+      if (onWaterConsumed) {
+        onWaterConsumed(waterToDeduct)
+      }
+      
+      // Reset
+      setWaterToDeduct(0)
+    }
+  }, [waterToDeduct, onWaterConsumed])
 
   // Load pending syncs from localStorage on mount
   useEffect(() => {
@@ -181,19 +216,20 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
   }, [ownedFlowers, totalPoints])
 
   const handleWaterClick = (flowerId: string) => {
-    // Check if has enough water, considering ALL pending syncs across all flowers
+    // Calculate how much water is currently being synced
     const totalPendingAcrossAllFlowers = Object.values(pendingSync).reduce((sum, val) => sum + val, 0)
-    const availableWater = localWater - totalPendingAcrossAllFlowers
+    const effectiveWater = localWater - totalPendingAcrossAllFlowers
     
     console.log("Water check:", {
       localWater,
       totalPendingAcrossAllFlowers,
-      availableWater,
-      canWater: availableWater >= 10
+      effectiveWater,
+      canWater: effectiveWater >= 10
     })
     
-    if (availableWater < 10) {
-      console.log("Not enough water to water")
+    // Use effective water for the check
+    if (effectiveWater < 10) {
+      console.log("Not enough water to water (considering pending syncs)")
       return
     }
 
@@ -207,17 +243,9 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
       [flowerId]: (prev[flowerId] || 0) + 10
     }))
 
-    // Decrement local water immediately
-    setLocalWater(prev => {
-      const newWater = prev - 10
-      console.log("Decrementing water:", prev, "->", newWater)
-      return newWater
-    })
-
-    // Notify parent about water consumption
-    if (onWaterConsumed) {
-      onWaterConsumed(10)
-    }
+    // NOTE: Don't decrement water here - let the server handle it
+    // Water will be deducted by the server when sync happens
+    // This prevents race conditions where UI shows incorrect water amounts
 
         // Track pending sync
     setPendingSync(prev => ({
@@ -262,11 +290,21 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
           Promise.all(syncPromises).then(results => {
             setPendingSync(prev => {
               const newPending = { ...prev }
+              let totalWaterDeducted = 0
+              
               results.forEach(({ flowerId, success }) => {
                 if (success) {
+                  // Calculate total water deducted for successful syncs
+                  totalWaterDeducted += currentPendingSync[flowerId] || 0
                   delete newPending[flowerId]
                 }
               })
+              
+              // Update water deduction state (will trigger useEffect)
+              if (totalWaterDeducted > 0) {
+                setWaterToDeduct(totalWaterDeducted)
+              }
+              
               return newPending
             })
           })
