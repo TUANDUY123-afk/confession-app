@@ -127,7 +127,8 @@ export default function SharedDiaryPage() {
         onClick={() => setShowModal(true)}
         className="relative z-20 fixed bottom-6 right-6 w-16 h-16 flex items-center justify-center 
                    rounded-full bg-gradient-to-r from-pink-500 to-rose-400 
-                   text-white shadow-xl hover:scale-110 transition-transform animate-bounce-slow"
+                   text-white shadow-xl hover:scale-110 transition-transform 
+                   animate-float-button animate-glow-pulse"
       >
         <PlusCircle className="w-8 h-8" />
       </button>
