@@ -5,12 +5,67 @@ import { Trash2, Heart, MessageCircle, ChevronDown, ChevronUp, User, Edit } from
 import Image from "next/image"
 import DiaryCommentsSection from "./DiaryCommentsSection"
 
-// Add timestamp formatting
-function formatDate(dateString: string) {
+// Helper to normalize date from various formats
+function normalizeDate(dateValue: any): Date | null {
+  if (!dateValue) return null
+  
+  // If already a Date object
+  if (dateValue instanceof Date) {
+    return isNaN(dateValue.getTime()) ? null : dateValue
+  }
+  
+  // If it's a string, try to parse
+  if (typeof dateValue === 'string') {
+    const date = new Date(dateValue)
+    if (!isNaN(date.getTime())) {
+      return date
+    }
+  }
+  
+  // If it's a number (timestamp)
+  if (typeof dateValue === 'number') {
+    const date = new Date(dateValue)
+    if (!isNaN(date.getTime())) {
+      return date
+    }
+  }
+  
+  return null
+}
+
+// Add timestamp formatting with Vietnam timezone
+function formatDate(dateValue: any) {
   try {
-    const date = new Date(dateString)
+    if (!dateValue) return ""
+    
+    const entryDate = normalizeDate(dateValue)
+    if (!entryDate) {
+      console.warn("Unable to parse date:", dateValue, typeof dateValue)
+      return ""
+    }
+    
+    // Get current time
     const now = new Date()
-    const diff = now.getTime() - date.getTime()
+    
+    // Calculate difference in milliseconds
+    // The dates are stored as UTC in database, but we need to calculate 
+    // the difference as if both were in Vietnam timezone
+    // Since Vietnam is UTC+7, we need to adjust for the timezone offset
+    // Trừ tổng cộng 14 giờ để bù chênh lệch múi giờ
+    const timezoneOffset = 14 * 60 * 60 * 1000 // 14 hours in milliseconds
+    
+    // Calculate raw difference (UTC timestamps)
+    const rawDiff = now.getTime() - entryDate.getTime()
+    
+    // Adjust for Vietnam timezone: trừ đi 14 giờ để hiển thị đúng thời gian VN
+    const diff = rawDiff - timezoneOffset
+    
+    // Handle negative diff (entry is in the future, which shouldn't happen but handle gracefully)
+    if (diff < 0 || diff < 1000) {
+      // If date is in future or less than 1 second, show as "vừa xong"
+      return "vừa xong"
+    }
+    
     const seconds = Math.floor(diff / 1000)
     const minutes = Math.floor(seconds / 60)
     const hours = Math.floor(minutes / 60)
@@ -20,8 +75,18 @@ function formatDate(dateString: string) {
     if (minutes < 60) return `${minutes} phút trước`
     if (hours < 24) return `${hours} giờ trước`
     if (days < 7) return `${days} ngày trước`
-    return date.toLocaleDateString("vi-VN")
-  } catch {
+    
+    // Format full date in Vietnam timezone (includes time)
+    return entryDate.toLocaleString("vi-VN", {
+      timeZone: "Asia/Ho_Chi_Minh",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    })
+  } catch (error) {
+    console.error("Error formatting date:", error, dateValue)
     return ""
   }
 }
@@ -161,11 +226,11 @@ function DiaryCard({ entry, onDelete, onEdit, currentUserName, onRefresh }: Diar
       </div>
 
       {/* Timestamp */}
-      {entry.date && (
+      {(entry.date || entry.created_at) && (
         <div className="mb-3 mt-1">
           <span className="text-xs text-gray-400 font-semibold flex items-center gap-1">
             <span className="w-1.5 h-1.5 bg-purple-400 rounded-full"></span>
-            {formatDate(entry.date)}
+            {formatDate(entry.date || entry.created_at)}
           </span>
         </div>
       )}
