@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "@/lib/supabase-client"
 import { type NextRequest, NextResponse } from "next/server"
+import { addPoints } from "@/lib/gamification-helpers"
 
 async function getLikes(photoUrl: string): Promise<number> {
   try {
@@ -11,7 +12,7 @@ async function getLikes(photoUrl: string): Promise<number> {
       return 0
     }
 
-    return result && result.length > 0 ? result[0].like_count : 0
+    return result && result.length > 0 ? (result[0] as any).like_count : 0
   } catch (error) {
     console.error("[v0] Error getting likes:", error)
     return 0
@@ -25,7 +26,7 @@ async function saveLikes(photoUrl: string, likeCount: number) {
       {
         photo_url: photoUrl,
         like_count: likeCount,
-      },
+      } as any,
       { onConflict: "photo_url" },
     )
   } catch (error) {
@@ -66,14 +67,11 @@ export async function POST(request: NextRequest) {
     // Award water points if this is a new like (count increased)
     if (isNewLike && likeCount > 0) {
       try {
-        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/gamification/points`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            activity_type: 'like_photo',
-            points: 3,
-            description: 'Like ảnh +3 nước 💧'
-          })
+        // Use direct function call instead of HTTP fetch (works on Vercel)
+        await addPoints({
+          activity_type: 'like_photo',
+          points: 3,
+          description: 'Like ảnh +3 nước 💧'
         })
       } catch (err) {
         console.error('Error awarding water for photo like:', err)

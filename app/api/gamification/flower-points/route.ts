@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "@/lib/supabase-client"
 import { NextResponse } from "next/server"
+import { updateAchievement } from "@/lib/gamification-helpers"
 
 const COUPLE_ID = "default_couple"
 
@@ -186,13 +187,10 @@ export async function POST(request: Request) {
     // Check if flower reached stage 3 and update achievement
     if (newFlowerWater >= stage3Threshold) {
       try {
-        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/gamification/achievements`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            achievement_type: 'love_garden_bloom',
-            progress_increment: 1,
-          })
+        // Use direct function call instead of HTTP fetch (works on Vercel)
+        await updateAchievement({
+          achievement_type: 'love_garden_bloom',
+          progress_increment: 1,
         })
       } catch (err) {
         console.error('Error updating love_garden_bloom achievement:', err)
