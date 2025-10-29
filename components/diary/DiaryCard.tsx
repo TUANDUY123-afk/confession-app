@@ -152,6 +152,16 @@ function DiaryCard({ entry, onDelete, onEdit, currentUserName, onRefresh }: Diar
   }, [entry.id, currentUserName, entry.likesCount, entry.commentsCount])
 
   async function handleLike() {
+    // Optimistic update: Cập nhật UI ngay lập tức
+    const previousLiked = hasLiked
+    const previousCount = likesCount
+    const newLiked = !hasLiked
+    const newCount = newLiked ? likesCount + 1 : likesCount - 1
+
+    setHasLiked(newLiked)
+    setLikesCount(newCount)
+
+    // Gọi API ngầm trong background
     try {
       const res = await fetch(`/api/diary/like`, {
         method: "POST",
@@ -161,10 +171,11 @@ function DiaryCard({ entry, onDelete, onEdit, currentUserName, onRefresh }: Diar
 
       if (res.ok) {
         const data = await res.json()
+        // Server đã nhận được tín hiệu, cập nhật với giá trị chính xác từ server
         setHasLiked(data.liked)
         setLikesCount(data.count || 0)
 
-        // Send notification when liked
+        // Gửi notification sau khi server phản hồi thành công
         if (data.liked) {
           await fetch("/api/notifications", {
             method: "POST",
@@ -179,15 +190,18 @@ function DiaryCard({ entry, onDelete, onEdit, currentUserName, onRefresh }: Diar
           })
         }
         
-        // Refresh parent component
+        // Refresh parent component sau khi server phản hồi
         if (onRefresh) {
           onRefresh()
         }
       } else {
-        console.error("Like failed:", await res.text())
+        throw new Error("Like failed")
       }
     } catch (err) {
       console.error("Error toggling like:", err)
+      // Rollback: Khôi phục về giá trị cũ nếu API fail
+      setHasLiked(previousLiked)
+      setLikesCount(previousCount)
     }
   }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef } from "react"
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Upload } from "lucide-react"
 import { Card } from "@/components/ui/card"
@@ -25,6 +25,11 @@ export default function PhotoWall() {
   const [showMultiUpload, setShowMultiUpload] = useState(false)
   const router = useRouter()
   const { addNotification } = useNotifications()
+  
+  // Queue để lưu pending likes chờ gửi
+  const pendingLikesRef = useRef<Map<string, { photoUrl: string; likeCount: number; originalCount: number; photo: Photo | undefined }>>(new Map())
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const isProcessingRef = useRef(false)
 
   const loadPhotos = useCallback(async () => {
     try {
@@ -81,72 +86,226 @@ export default function PhotoWall() {
     }
   }, [photos, addNotification])
 
-  const handleLike = useCallback(async (url: string) => {
-    try {
-      const currentUser = localStorage.getItem("lovable_user") || "Ẩn danh"
-      // Get current like count
-      const currentLikes = photos.find((p) => p.url === url)?.likes || 0
-      const newLikeCount = currentLikes + 1
+  // Hàm gửi batch likes lên server
+  const sendBatchLikes = useCallback(async () => {
+    if (isProcessingRef.current || pendingLikesRef.current.size === 0) {
+      return
+    }
 
-      const response = await fetch("/api/likes", {
+    isProcessingRef.current = true
+    const currentUser = localStorage.getItem("lovable_user") || "Ẩn danh"
+    
+    // Lấy tất cả pending likes và lưu original states để rollback nếu cần
+    const likesToSend = Array.from(pendingLikesRef.current.values())
+    const originalStates = new Map<string, number>()
+    
+    // Lưu lại giá trị gốc (trước khi optimistic update) để rollback
+    likesToSend.forEach(({ photoUrl, originalCount }) => {
+      originalStates.set(photoUrl, originalCount)
+    })
+
+    // Clear pending queue
+    pendingLikesRef.current.clear()
+
+    try {
+      // Gửi batch request
+      const response = await fetch("/api/likes/batch", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photoUrl: url, likeCount: newLikeCount }),
+        body: JSON.stringify({
+          likes: likesToSend.map(({ photoUrl, likeCount }) => ({
+            photoUrl,
+            likeCount,
+          })),
+        }),
       })
-      if (!response.ok) throw new Error("Like failed")
-      setPhotos((prev) =>
-        prev.map((p) =>
-          p.url === url ? { ...p, likes: newLikeCount } : p
-        )
-      )
 
-      // Send notification
-      const photo = photos.find((p) => p.url === url)
-      await addNotification({
-        type: "like",
-        message: `${currentUser} đã thích ảnh "${photo?.title || "của bạn"}" ❤️`,
-        author: currentUser,
-        target: "Tất cả",
-        link: "/photo-wall"
-      })
+      if (!response.ok) {
+        throw new Error("Batch like failed")
+      }
+
+      const data = await response.json()
+      
+      // Update UI với giá trị từ server
+      if (data.results && Array.isArray(data.results)) {
+        setPhotos((prev) =>
+          prev.map((p) => {
+            const result = data.results.find((r: any) => r.photoUrl === p.url)
+            if (result && result.success) {
+              return { ...p, likes: result.likes }
+            }
+            return p
+          })
+        )
+
+        // Gửi notification cho mỗi photo được like
+        for (const { photoUrl, photo } of likesToSend) {
+          if (photo) {
+            await addNotification({
+              type: "like",
+              message: `${currentUser} đã thích ảnh "${photo.title || "của bạn"}" ❤️`,
+              author: currentUser,
+              target: "Tất cả",
+              link: "/photo-wall"
+            })
+          }
+        }
+      }
     } catch (error) {
-      console.error("Error liking photo:", error)
+      console.error("Error sending batch likes:", error)
+      // Rollback: Khôi phục về giá trị cũ nếu API fail
+      setPhotos((prev) =>
+        prev.map((p) => {
+          const originalCount = originalStates.get(p.url)
+          if (originalCount !== undefined) {
+            return { ...p, likes: originalCount }
+          }
+          return p
+        })
+      )
+    } finally {
+      isProcessingRef.current = false
     }
   }, [photos, addNotification])
 
+  // Cleanup timer và gửi pending likes khi component unmount hoặc trang refresh
+  useEffect(() => {
+    // Hàm gửi pending likes ngay lập tức (không chờ debounce)
+    const flushPendingLikes = async () => {
+      if (pendingLikesRef.current.size > 0 && !isProcessingRef.current) {
+        // Clear timer nếu có
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current)
+          debounceTimerRef.current = null
+        }
+        // Gửi ngay lập tức
+        await sendBatchLikes()
+      }
+    }
+
+    // Event listener cho beforeunload để gửi pending likes trước khi trang refresh/close
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (pendingLikesRef.current.size > 0) {
+        // Lấy tất cả pending likes
+        const likesToSend = Array.from(pendingLikesRef.current.values())
+        const likesData = likesToSend.map(({ photoUrl, likeCount }) => ({
+          photoUrl,
+          likeCount,
+        }))
+
+        // Sử dụng sendBeacon để gửi data trước khi trang unload
+        // sendBeacon hỗ trợ Blob với JSON
+        const blob = new Blob([JSON.stringify({ likes: likesData })], {
+          type: 'application/json',
+        })
+        navigator.sendBeacon('/api/likes/batch', blob)
+      }
+    }
+
+    // Thêm event listener
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    
+    // Cleanup khi component unmount
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+      
+      // Gửi pending likes trước khi unmount nếu có
+      flushPendingLikes()
+    }
+  }, [sendBatchLikes])
+
+  const handleLike = useCallback((url: string) => {
+    const photo = photos.find((p) => p.url === url)
+    
+    // Lấy giá trị base: nếu đã có trong queue thì dùng likeCount từ queue (đã được tăng),
+    // nếu không thì dùng từ state. Lưu originalCount để rollback.
+    const existingPending = pendingLikesRef.current.get(url)
+    const baseLikes = existingPending?.likeCount ?? (photo?.likes || 0)
+    const originalLikes = existingPending?.originalCount ?? (photo?.likes || 0)
+    const newLikeCount = baseLikes + 1
+
+    // Optimistic update: Cập nhật UI ngay lập tức
+    setPhotos((prev) =>
+      prev.map((p) =>
+        p.url === url ? { ...p, likes: newLikeCount } : p
+      )
+    )
+
+    // Thêm vào pending queue (update nếu đã tồn tại)
+    // Lưu cả giá trị gốc để rollback nếu cần
+    pendingLikesRef.current.set(url, {
+      photoUrl: url,
+      likeCount: newLikeCount,
+      originalCount: originalLikes,
+      photo,
+    })
+
+    // Clear timer cũ
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+
+    // Set timer mới để gửi sau khi user ngừng nhấn (1 giây - giảm để tránh mất data khi refresh)
+    debounceTimerRef.current = setTimeout(() => {
+      sendBatchLikes()
+    }, 1000)
+  }, [photos, sendBatchLikes])
+
   const handleComment = useCallback(async (url: string, commentText: string) => {
+    const currentUser = localStorage.getItem("lovable_user") || "Ẩn danh"
+    const photo = photos.find((p) => p.url === url)
+    const currentComments = photo?.comments || []
+    
+    // Tạo comment tạm thời để hiển thị ngay
+    const tempComment = {
+      id: `temp-${Date.now()}`,
+      text: commentText,
+      author: currentUser,
+      created_at: new Date().toISOString(),
+    }
+
+    // Optimistic update: Thêm comment vào UI ngay lập tức
+    setPhotos((prev) =>
+      prev.map((p) =>
+        p.url === url
+          ? { ...p, comments: [...currentComments, tempComment] }
+          : p
+      )
+    )
+
+    // Gọi API ngầm trong background
     try {
-      const currentUser = localStorage.getItem("lovable_user") || "Ẩn danh"
       const response = await fetch("/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ photoUrl: url, text: commentText, author: currentUser }),
       })
-      if (!response.ok) throw new Error("Comment failed")
       
-      // Reload specific photo to get updated comments
-      const photoResponse = await fetch(`/api/list-photos`)
-      const photoData = await photoResponse.json()
-      const updatedPhoto = photoData.photos?.find((p: Photo) => p.url === url)
-      
-      if (updatedPhoto) {
-        setPhotos((prev) =>
-          prev.map((p) => (p.url === url ? updatedPhoto : p))
-        )
-      } else {
-        // Fallback: add comment to state
-        const data = await response.json()
-        setPhotos((prev) =>
-          prev.map((p) =>
-            p.url === url
-              ? { ...p, comments: [...(p.comments || []), data.comment] }
-              : p
-          )
-        )
+      if (!response.ok) {
+        throw new Error("Comment failed")
       }
 
-      // Send notification
-      const photo = photos.find((p) => p.url === url)
+      // Server đã nhận được tín hiệu, thay thế comment tạm bằng comment thật từ server
+      const data = await response.json()
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p.url === url
+            ? {
+                ...p,
+                comments: [
+                  ...(p.comments || []).filter((c: any) => c.id !== tempComment.id),
+                  data.comment,
+                ],
+              }
+            : p
+        )
+      )
+
+      // Gửi notification sau khi server phản hồi thành công
       await addNotification({
         type: "comment",
         message: `${currentUser} đã bình luận về ảnh "${photo?.title || "của bạn"}" 💬`,
@@ -156,6 +315,14 @@ export default function PhotoWall() {
       })
     } catch (error) {
       console.error("Error commenting photo:", error)
+      // Rollback: Xóa comment tạm nếu API fail
+      setPhotos((prev) =>
+        prev.map((p) =>
+          p.url === url
+            ? { ...p, comments: currentComments }
+            : p
+        )
+      )
     }
   }, [photos, addNotification])
 

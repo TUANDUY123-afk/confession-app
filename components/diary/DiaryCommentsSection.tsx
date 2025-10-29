@@ -61,52 +61,75 @@ export default function DiaryCommentsSection({
       return
     }
 
+    const commentText = newComment.trim()
+    const authorName = currentUser?.name || "Ẩn danh"
+    
+    // Tạo comment tạm thời để hiển thị ngay
+    const tempComment: Comment = {
+      id: `temp-${Date.now()}`,
+      content: commentText,
+      author: authorName,
+      created_at: new Date().toISOString(),
+    }
+
+    // Optimistic update: Thêm comment vào UI ngay lập tức
+    setComments([...comments, tempComment])
+    setNewComment("")
+
+    // Gọi API ngầm trong background
     try {
       const res = await fetch("/api/diary-comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           entryId,
-          text: newComment,
-          author: currentUser?.name || "Ẩn danh",
+          text: commentText,
+          author: authorName,
         }),
       })
 
       if (res.ok) {
         const data = await res.json()
-        // Add new comment to the END of the array (oldest first)
-        const newCommentData = {
+        // Server đã nhận được tín hiệu, thay thế comment tạm bằng comment thật từ server
+        const newCommentData: Comment = {
           id: data.comment.id,
           content: data.comment.content || data.comment.text,
           author: data.comment.author,
-          created_at: data.comment.created_at || data.comment.timestamp
+          created_at: data.comment.created_at || data.comment.timestamp || new Date().toISOString()
         }
-        setComments([...comments, newCommentData])
-        setNewComment("")
+        
+        setComments((prev) => [
+          ...prev.filter((c) => c.id !== tempComment.id),
+          newCommentData,
+        ])
+        
         onCommentAdded()
 
-        // Send notification
+        // Gửi notification sau khi server phản hồi thành công
         try {
           const entryAuthor = entry?.author || "Đôi ta"
           await fetch("/api/notifications", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type: "diary",
-            message: `${currentUser?.name || "Ẩn danh"} đã bình luận trong nhật ký "${entry?.title || "của bạn"}" 💬 (+5 nước 💧)`,
-            author: currentUser?.name || "Ẩn danh",
-            target: entryAuthor,
-            link: "/shared-diary",
-          }),
+            body: JSON.stringify({
+              type: "diary",
+              message: `${authorName} đã bình luận trong nhật ký "${entry?.title || "của bạn"}" 💬 (+5 nước 💧)`,
+              author: authorName,
+              target: entryAuthor,
+              link: "/shared-diary",
+            }),
           })
         } catch (notifError) {
           console.error("Failed to send notification:", notifError)
         }
       } else {
-        console.error("[Add comment] Server returned error")
+        throw new Error("Comment failed")
       }
     } catch (error) {
       console.error("[Error adding comment]", error)
+      // Rollback: Xóa comment tạm nếu API fail
+      setComments(comments)
+      setNewComment(commentText)
     }
   }
 
