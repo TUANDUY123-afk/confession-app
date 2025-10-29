@@ -14,20 +14,30 @@ interface FlowerProgressProps {
 }
 
 const getDifficulty = (price: number) => {
-  if (price >= 200) return { 
-    level: "Rất Khó", 
-    thresholds: [0, 300, 600, 1000], 
-    rewards: [50, 150, 400] // Coins for each stage
+  if (price >= 600) return { 
+    level: "Cực Khó", 
+    thresholds: [0, 800, 1600, 2500], 
+    rewards: [100, 300, 800] // Coins for each stage
   }
-  if (price >= 150) return { 
+  if (price >= 400) return { 
+    level: "Siêu Khó", 
+    thresholds: [0, 700, 1400, 2200], 
+    rewards: [80, 250, 650]
+  }
+  if (price >= 300) return { 
+    level: "Rất Khó", 
+    thresholds: [0, 600, 1200, 2000], 
+    rewards: [70, 220, 600]
+  }
+  if (price >= 200) return { 
     level: "Khó", 
-    thresholds: [0, 200, 500, 800],
-    rewards: [30, 100, 250]
+    thresholds: [0, 500, 1000, 1500], 
+    rewards: [60, 180, 500]
   }
   return { 
     level: "Dễ", 
-    thresholds: [0, 100, 200, 500],
-    rewards: [20, 60, 150]
+    thresholds: [0, 300, 700, 1200],
+    rewards: [40, 130, 300]
   }
 }
 
@@ -64,11 +74,19 @@ export default function FlowerProgress({ totalPoints, flowerPrice, currentStage,
     stageName = "Phát Triển"
     reward = rewards[0]
     stageIndex = 1
+  } else {
+    // Mầm Non stage
+    currentThreshold = thresholds[0]
+    nextThreshold = thresholds[1]
+    stageName = "Mầm Non"
+    reward = 0
+    stageIndex = 0
   }
 
-  const progress = nextThreshold > 0 
-    ? ((actualPoints - currentThreshold) / (nextThreshold - currentThreshold)) * 100 
-    : 100
+  // Calculate progress based on current and next threshold
+  const progress = nextThreshold > 0 && nextThreshold > currentThreshold
+    ? Math.max(0, Math.min(100, ((actualPoints - currentThreshold) / (nextThreshold - currentThreshold)) * 100))
+    : actualPoints >= thresholds[3] ? 100 : 0
 
   const pointsNeeded = nextThreshold > 0 ? nextThreshold - actualPoints : 0
 

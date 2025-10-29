@@ -1,17 +1,10 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
+import { getSupabaseClient } from "@/lib/supabase-client"
 
 // 🩷 Lấy danh sách thông báo
 export async function GET(req: Request) {
   try {
-    const supabase = getSupabase()
+    const supabase = getSupabaseClient()
     const url = new URL(req.url)
     const user = url.searchParams.get("user")
     
@@ -63,7 +56,7 @@ export async function GET(req: Request) {
 // 🩷 Tạo thông báo mới
 export async function POST(req: Request) {
   try {
-    const supabase = getSupabase()
+    const supabase = getSupabaseClient()
     const { type, message, author, target, link } = await req.json()
 
     console.log("[v0] Creating notification:", { type, message, author, target, link })

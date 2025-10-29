@@ -12,6 +12,7 @@ import MyFlowers from "@/components/my-flowers"
 import FlowerProgress from "@/components/flower-progress"
 import WaterHistoryModal from "@/components/water-history-modal"
 import WaterEarnInfoModal from "@/components/water-earn-info-modal"
+import V4UpdateLog from "@/components/v4-update-log"
 
 export default function GamificationPage() {
   const [totalPoints, setTotalPoints] = useState(0)
@@ -82,20 +83,31 @@ export default function GamificationPage() {
         jasmine: "Hoa Nhài",
         lavender: "Hoa Oải Hương",
         cherry: "Hoa Anh Đào",
+        orchid: "Hoa Lan",
+        lotus: "Hoa Sen",
+        peony: "Hoa Mẫu Đơn",
+        "rose-gold": "Hoa Hồng Vàng",
+        "eternal-rose": "Hoa Hồng Vĩnh Cửu",
       }
       
       let thresholds: number[]
       let rewards: number[]
       
-      if (flowerPrice >= 200) {
-        thresholds = [0, 300, 600, 1000]
-        rewards = [50, 150, 400]
-      } else if (flowerPrice >= 150) {
-        thresholds = [0, 200, 500, 800]
-        rewards = [30, 100, 250]
+      if (flowerPrice >= 600) {
+        thresholds = [0, 800, 1600, 2500]
+        rewards = [100, 300, 800]
+      } else if (flowerPrice >= 400) {
+        thresholds = [0, 700, 1400, 2200]
+        rewards = [80, 250, 650]
+      } else if (flowerPrice >= 300) {
+        thresholds = [0, 600, 1200, 2000]
+        rewards = [70, 220, 600]
+      } else if (flowerPrice >= 200) {
+        thresholds = [0, 500, 1000, 1500]
+        rewards = [60, 180, 500]
       } else {
-        thresholds = [0, 100, 200, 500]
-        rewards = [20, 60, 150]
+        thresholds = [0, 300, 700, 1200]
+        rewards = [40, 130, 300]
       }
       
              // Check each stage
@@ -121,21 +133,31 @@ export default function GamificationPage() {
   }
 
   const getCurrentStage = (points: number) => {
-    const flowerPrice = selectedFlowerDetail ? getFlowerPrice(selectedFlowerDetail) : 100
-    if (flowerPrice >= 200) {
-      if (points >= 1000) return 3
-      if (points >= 600) return 2
-      if (points >= 300) return 1
+    const flowerPrice = selectedFlowerDetail ? getFlowerPrice(selectedFlowerDetail) : 150
+    if (flowerPrice >= 600) {
+      if (points >= 2500) return 3
+      if (points >= 1600) return 2
+      if (points >= 800) return 1
       return 0
-    } else if (flowerPrice >= 150) {
-      if (points >= 800) return 3
-      if (points >= 500) return 2
-      if (points >= 200) return 1
+    } else if (flowerPrice >= 400) {
+      if (points >= 2200) return 3
+      if (points >= 1400) return 2
+      if (points >= 700) return 1
+      return 0
+    } else if (flowerPrice >= 300) {
+      if (points >= 2000) return 3
+      if (points >= 1200) return 2
+      if (points >= 600) return 1
+      return 0
+    } else if (flowerPrice >= 200) {
+      if (points >= 1500) return 3
+      if (points >= 1000) return 2
+      if (points >= 500) return 1
       return 0
     } else {
-      if (points >= 500) return 3
-      if (points >= 200) return 2
-      if (points >= 100) return 1
+      if (points >= 1200) return 3
+      if (points >= 700) return 2
+      if (points >= 300) return 1
       return 0
     }
   }
@@ -377,16 +399,21 @@ export default function GamificationPage() {
   }
 
   const getFlowerPrice = (flowerId: string | null) => {
-    if (!flowerId) return 100
+    if (!flowerId) return 150
     const prices: { [key: string]: number } = {
-      rose: 100,
-      tulip: 120,
-      sunflower: 150,
-      jasmine: 160,
-      lavender: 180,
-      cherry: 200,
+      rose: 150,
+      tulip: 180,
+      sunflower: 220,
+      jasmine: 240,
+      lavender: 270,
+      cherry: 300,
+      orchid: 350,
+      lotus: 400,
+      peony: 500,
+      "rose-gold": 600,
+      "eternal-rose": 800,
     }
-    return prices[flowerId] || 100
+    return prices[flowerId] || 150
   }
 
   return (
@@ -555,7 +582,7 @@ export default function GamificationPage() {
               <div className="p-6">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-2xl font-bold text-green-600 flex items-center gap-2">
-                    🌸 Vườn Tình Yêu
+                    🌸 Chi Tiết Hoa
                   </h2>
                   <button
                     onClick={() => setShowFlowerDetail(false)}
@@ -565,6 +592,95 @@ export default function GamificationPage() {
                   </button>
                 </div>
                 
+                {/* Flower Info Header */}
+                {selectedFlowerDetail && (() => {
+                  const flowerNames: { [key: string]: string } = {
+                    rose: "Hoa Hồng",
+                    tulip: "Hoa Tulip",
+                    sunflower: "Hoa Hướng Dương",
+                    jasmine: "Hoa Nhài",
+                    lavender: "Hoa Oải Hương",
+                    cherry: "Hoa Anh Đào",
+                    orchid: "Hoa Lan",
+                    lotus: "Hoa Sen",
+                    peony: "Hoa Mẫu Đơn",
+                    "rose-gold": "Hoa Hồng Vàng",
+                    "eternal-rose": "Hoa Hồng Vĩnh Cửu",
+                  }
+                  const flowerEmojis: { [key: string]: string } = {
+                    rose: "🌹",
+                    tulip: "🌷",
+                    sunflower: "🌻",
+                    jasmine: "🤍",
+                    lavender: "🪻",
+                    cherry: "🌸",
+                    orchid: "🦋",
+                    lotus: "🪷",
+                    peony: "🌺",
+                    "rose-gold": "🌼",
+                    "eternal-rose": "💎",
+                  }
+                  const flowerDescriptions: { [key: string]: string } = {
+                    rose: "Hoa hồng đỏ - biểu tượng của tình yêu đam mê",
+                    tulip: "Hoa tulip - sự hoàn mỹ và tình yêu vĩnh cửu",
+                    sunflower: "Hoa hướng dương - ánh sáng và niềm vui",
+                    jasmine: "Hoa nhài - sự tinh khiết và vẻ đẹp tự nhiên",
+                    lavender: "Hoa oải hương - sự bình yên và tịnh tâm",
+                    cherry: "Hoa anh đào - sự dịu dàng, ngọt ngào",
+                    orchid: "Hoa lan - sự sang trọng và quý phái",
+                    lotus: "Hoa sen - sự thanh khiết và giác ngộ",
+                    peony: "Hoa mẫu đơn - vẻ đẹp và thịnh vượng",
+                    "rose-gold": "Hoa hồng vàng - tình bạn và niềm vui",
+                    "eternal-rose": "Hoa hồng vĩnh cửu - tình yêu bất diệt",
+                  }
+                  const flowerPrice = getFlowerPrice(selectedFlowerDetail)
+                  const difficultyColors: { [key: string]: string } = {
+                    "Dễ": "text-green-600 bg-green-100",
+                    "Khó": "text-red-600 bg-red-100",
+                    "Rất Khó": "text-purple-600 bg-purple-100",
+                    "Siêu Khó": "text-purple-700 bg-purple-200",
+                    "Cực Khó": "text-purple-900 bg-purple-300",
+                  }
+                  let difficultyLevel = "Dễ"
+                  if (flowerPrice >= 600) difficultyLevel = "Cực Khó"
+                  else if (flowerPrice >= 400) difficultyLevel = "Siêu Khó"
+                  else if (flowerPrice >= 300) difficultyLevel = "Rất Khó"
+                  else if (flowerPrice >= 200) difficultyLevel = "Khó"
+                  
+                  return (
+                    <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200 mb-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="text-6xl">
+                          {flowerEmojis[selectedFlowerDetail] || "🌸"}
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                            {flowerNames[selectedFlowerDetail] || selectedFlowerDetail}
+                          </h3>
+                          <p className="text-gray-600 text-sm mb-3">
+                            {flowerDescriptions[selectedFlowerDetail] || ""}
+                          </p>
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-1.5 border border-yellow-300">
+                              <span className="text-lg">🪙</span>
+                              <span className="font-bold text-yellow-600">{flowerPrice} xu</span>
+                            </div>
+                            <div className={`rounded-lg px-3 py-1.5 font-semibold text-sm ${difficultyColors[difficultyLevel]}`}>
+                              {difficultyLevel}
+                            </div>
+                            <div className="flex items-center gap-2 bg-white rounded-lg px-3 py-1.5 border border-blue-300">
+                              <span className="text-lg">💧</span>
+                              <span className="font-bold text-blue-600">
+                                {flowerWaterMap[selectedFlowerDetail] || 0} nước
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })()}
+                
                 <div className="space-y-6">
                   {/* Love Tree */}
                   <LoveTree 
@@ -572,16 +688,16 @@ export default function GamificationPage() {
                     currentFlower={selectedFlowerDetail} 
                   />
                   
-                                     {/* Flower Progress */}
-                                       <FlowerProgress 
-                      totalPoints={totalPoints}
-                      flowerPrice={getFlowerPrice(selectedFlowerDetail)}
-                      currentStage={0}
-                      onClaimReward={(coins) => handleClaimReward(coins, getCurrentStage(flowerWaterMap[selectedFlowerDetail] || 0), selectedFlowerDetail || undefined)}
-                      claimedStages={claimedStages}
-                      flowerId={selectedFlowerDetail}
-                      flowerWater={flowerWaterMap[selectedFlowerDetail]}
-                    />
+                  {/* Flower Progress */}
+                  <FlowerProgress 
+                    totalPoints={totalPoints}
+                    flowerPrice={getFlowerPrice(selectedFlowerDetail)}
+                    currentStage={0}
+                    onClaimReward={(coins) => handleClaimReward(coins, getCurrentStage(flowerWaterMap[selectedFlowerDetail] || 0), selectedFlowerDetail || undefined)}
+                    claimedStages={claimedStages}
+                    flowerId={selectedFlowerDetail}
+                    flowerWater={flowerWaterMap[selectedFlowerDetail]}
+                  />
                 </div>
               </div>
             </div>
@@ -668,6 +784,9 @@ export default function GamificationPage() {
           onClose={() => setShowWaterEarnInfo(false)}
         />
       </div>
+
+      {/* V4 Update Log Button */}
+      <V4UpdateLog />
     </main>
   )
 }

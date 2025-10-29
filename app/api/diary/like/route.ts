@@ -141,16 +141,18 @@ export async function POST(request: NextRequest) {
         })
         
         // Update like_master achievement (only for diary entries, not comments)
+        // Note: progress_increment is ignored - achievement counts from database
         if (!isComment) {
           try {
-            console.log('[Like API] Updating like_master achievement for entry:', entryId)
+            console.log('[Like Diary API] Updating like_master achievement for entry:', entryId)
             const result = await updateAchievement({
               achievement_type: 'like_master',
-              progress_increment: 1,
+              progress_increment: 0, // Will count from database (diary_likes + photo likes)
             })
-            console.log('[Like API] Achievement update result:', result)
+            console.log('[Like Diary API] Achievement update result:', result)
+            console.log('[Like Diary API] New progress:', result?.progress, 'Unlocked levels:', result?.unlockedLevels)
           } catch (err) {
-            console.error('[Like API] Error updating like_master achievement:', err)
+            console.error('[Like Diary API] Error updating like_master achievement:', err)
             // Don't throw - just log the error so it doesn't break the like flow
           }
         }

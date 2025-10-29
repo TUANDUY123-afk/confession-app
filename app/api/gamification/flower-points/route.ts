@@ -153,6 +153,11 @@ export async function POST(request: Request) {
       jasmine: "Hoa Nhài",
       lavender: "Hoa Oải Hương",
       cherry: "Hoa Anh Đào",
+      orchid: "Hoa Lan",
+      lotus: "Hoa Sen",
+      peony: "Hoa Mẫu Đơn",
+      "rose-gold": "Hoa Hồng Vàng",
+      "eternal-rose": "Hoa Hồng Vĩnh Cửu",
     }
     const flowerName = flowerNames[flower_id] || flower_id
     
@@ -167,21 +172,32 @@ export async function POST(request: Request) {
     // Check if flower reached stage 3 (Nở Rộ) for achievement
     // Get flower price to determine thresholds
     const flowerPrices: { [key: string]: number } = {
-      rose: 100,
-      tulip: 120,
-      sunflower: 150,
-      jasmine: 160,
-      lavender: 180,
-      cherry: 200,
+      rose: 150,
+      tulip: 180,
+      sunflower: 220,
+      jasmine: 240,
+      lavender: 270,
+      cherry: 300,
+      orchid: 350,
+      lotus: 400,
+      peony: 500,
+      "rose-gold": 600,
+      "eternal-rose": 800,
     }
-    const flowerPrice = flowerPrices[flower_id] || 100
+    const flowerPrice = flowerPrices[flower_id] || 150
     
     // Determine thresholds based on price
-    let stage3Threshold = 500
-    if (flowerPrice >= 200) {
-      stage3Threshold = 1000
-    } else if (flowerPrice >= 150) {
-      stage3Threshold = 800
+    let stage3Threshold = 1200
+    if (flowerPrice >= 600) {
+      stage3Threshold = 2500
+    } else if (flowerPrice >= 400) {
+      stage3Threshold = 2200
+    } else if (flowerPrice >= 300) {
+      stage3Threshold = 2000
+    } else if (flowerPrice >= 200) {
+      stage3Threshold = 1500
+    } else {
+      stage3Threshold = 1200
     }
     
     // Check if flower reached stage 3 and update achievement

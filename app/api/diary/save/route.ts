@@ -40,16 +40,16 @@ export async function POST(request: Request) {
             description: 'Viết nhật ký +20 nước 💧'
           })
           
-          // Check if streak >= 3 for daily_diary achievement
-          if (pointsResult.streak >= 3) {
-            try {
-              await updateAchievement({
-                achievement_type: 'daily_diary',
-                progress_increment: 0, // Don't increment, just check if streak >= 3
-              })
-            } catch (err) {
-              console.error('Error updating daily_diary achievement:', err)
-            }
+          // Update daily_diary achievement every time a diary is written
+          // The achievement progress is calculated from current_streak in the database
+          try {
+            await updateAchievement({
+              achievement_type: 'daily_diary',
+              progress_increment: 0, // This doesn't increment, it reads from current_streak
+            })
+            console.log(`[Diary Save] Updated daily_diary achievement, streak: ${pointsResult.streak}`)
+          } catch (err) {
+            console.error('Error updating daily_diary achievement:', err)
           }
         } catch (err) {
           console.error('Error awarding water for diary entry:', err)

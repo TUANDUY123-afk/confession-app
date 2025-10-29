@@ -1,6 +1,6 @@
 import { getSupabaseClient } from "@/lib/supabase-client"
 import { type NextRequest, NextResponse } from "next/server"
-import { addPoints } from "@/lib/gamification-helpers"
+import { addPoints, updateAchievement } from "@/lib/gamification-helpers"
 
 async function getLikes(photoUrl: string): Promise<number> {
   try {
@@ -73,6 +73,20 @@ export async function POST(request: NextRequest) {
           points: 3,
           description: 'Like ảnh +3 nước 💧'
         })
+        
+        // Update like_master achievement (photo likes also count)
+        // Note: progress_increment is ignored - achievement counts from database
+        try {
+          console.log('[Like Photo API] Updating like_master achievement for photo:', photoUrl)
+          const result = await updateAchievement({
+            achievement_type: 'like_master',
+            progress_increment: 0, // Will count from database (diary_likes + photo likes)
+          })
+          console.log('[Like Photo API] Achievement update result:', result)
+          console.log('[Like Photo API] New progress:', result?.progress, 'Unlocked levels:', result?.unlockedLevels)
+        } catch (err) {
+          console.error('[Like Photo API] Error updating like_master achievement:', err)
+        }
       } catch (err) {
         console.error('Error awarding water for photo like:', err)
       }

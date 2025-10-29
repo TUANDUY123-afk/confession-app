@@ -14,14 +14,25 @@ export default function VersionBadge({ version }: VersionBadgeProps) {
     {
       version: `${version} (Current)`,
       items: [
-        "✨ Hệ thống thành tích nhiều giai đoạn với thưởng tăng dần",
-        "🎨 UI thành tích hoàn toàn mới - hiện đại và đẹp mắt",
-        "📊 Progress bar tổng hợp cho tất cả giai đoạn trong 1 thanh",
-        "🎯 Chỉ hiển thị giai đoạn đã hoàn thành và giai đoạn tiếp theo",
-        "💧 Thưởng nước được điều chỉnh hợp lý và tăng dần theo giai đoạn",
-        "🏆 Mỗi thành tích có 4 giai đoạn với mục tiêu và phần thưởng riêng",
-        "✅ Tự động track và unlock từng giai đoạn",
-        "🎉 Animation và hiệu ứng mượt mà khi unlock"
+        "🎁 Hệ thống nhận thưởng thành tích mới - không tự động cộng nước nữa",
+        "✨ Khi đạt mốc thành tích, hiển thị nút 'Nhận thưởng' để nhận nước thủ công",
+        "💧 Người dùng tự quyết định khi nào nhận phần thưởng từ thành tích",
+        "🔒 Tránh cộng điểm trùng với tracking claimed_levels",
+        "🎯 Cải thiện logic unlock level - đơn giản và chính xác hơn",
+        "🔧 Sửa lỗi 500 trong Notifications API - dùng getSupabaseClient() thống nhất",
+        "🎨 Cập nhật UI thành tích với trạng thái claimed/unclaimed",
+        "⚡ Tối ưu performance và loading states"
+      ]
+    },
+    {
+      version: "v4",
+      items: [
+        "💰 Cập nhật giá hoa: Tất cả hoa hiện có tăng giá 47-50%",
+        "🌺 Thêm 5 loài hoa mới: Hoa Lan (350 xu), Hoa Sen (400 xu), Hoa Mẫu Đơn (500 xu), Hoa Hồng Vàng (600 xu), Hoa Hồng Vĩnh Cửu (800 xu)",
+        "🎯 Hệ thống độ khó mới với 5 cấp độ: Dễ, Khó, Rất Khó, Siêu Khó, Cực Khó",
+        "🎁 Phần thưởng xu được điều chỉnh theo độ khó: Dễ [40, 130, 300], Khó [60, 180, 500], Rất Khó [70, 220, 600], Siêu Khó [80, 250, 650], Cực Khó [100, 300, 800]",
+        "📊 Thresholds mới cho từng độ khó với yêu cầu nước tăng dần",
+        "📝 Thêm nút log v4 ở góc màn hình để xem chi tiết cập nhật"
       ]
     },
     {

@@ -1,0 +1,217 @@
+# Confession App - Cursor Rules & Project Documentation
+
+## 📋 Tổng quan Project
+
+Đây là một ứng dụng **Confession App** (Ứng dụng tình yêu) với các tính năng:
+- Love Story: Lưu trữ câu chuyện tình yêu
+- Photo Wall: Tường ảnh chia sẻ khoảnh khắc
+- Shared Diary: Nhật ký chung cho cặp đôi
+- Gamification System: Hệ thống game hóa với hoa, điểm, thành tích
+- Calendar & Events: Lịch và sự kiện đặc biệt
+- Notifications: Hệ thống thông báo
+
+## 🛠️ Tech Stack
+
+- **Framework**: Next.js 15.5.4 (App Router)
+- **Language**: TypeScript 5 (strict mode)
+- **Styling**: Tailwind CSS 4.1.9 + shadcn/ui components
+- **Database**: Supabase (PostgreSQL)
+- **Authentication**: Supabase Auth
+- **Storage**: Supabase Storage
+- **Animations**: Framer Motion
+- **UI Components**: Radix UI primitives
+- **Forms**: React Hook Form + Zod validation
+- **Icons**: Lucide React
+
+## 📁 Cấu trúc Project
+
+```
+app/
+├── api/              # API routes (Server-side)
+├── [pages]/          # Client pages
+components/            # Reusable React components
+lib/                   # Utilities, helpers, clients
+scripts/               # SQL scripts, setup scripts
+utils/                 # Utility functions
+```
+
+## 🗄️ Database Structure (Supabase)
+
+### Tables chính:
+- `users`: Thông tin người dùng
+- `love_story`: Dữ liệu câu chuyện tình yêu (JSONB)
+- `diary_entries`: Nhật ký chung
+- `photos`: Ảnh trong photo wall
+- `comments`: Bình luận
+- `likes`: Lượt thích
+- `notifications`: Thông báo
+- `love_points`: Điểm tình yêu, streak, water, coins, owned_flowers
+- `flower_points`: Điểm nước cho từng loài hoa (mỗi hoa có điểm riêng)
+- `achievements`: Thành tích và progress
+- `activity_log`: Nhật ký hoạt động
+
+### Constants quan trọng:
+- **COUPLE_ID**: `"default_couple"` - ID mặc định cho cặp đôi
+- File: `lib/gamification-helpers.ts`, `app/api/gamification/**/route.ts`
+
+### Lưu ý Database:
+- RLS (Row Level Security) đã được DISABLE cho tất cả tables
+- Sử dụng Service Role Key để bypass RLS
+- Environment variables cần: `NEXT_PUBLIC_SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`
+
+## 🌸 Gamification System (v4)
+
+### Hệ thống Hoa
+
+**Giá hoa hiện tại:**
+- Hoa Hồng (rose): 150 xu
+- Hoa Tulip (tulip): 180 xu
+- Hoa Hướng Dương (sunflower): 220 xu
+- Hoa Nhài (jasmine): 240 xu
+- Hoa Oải Hương (lavender): 270 xu
+- Hoa Anh Đào (cherry): 300 xu
+- **Hoa mới (v4):**
+  - Hoa Lan (orchid): 350 xu
+  - Hoa Sen (lotus): 400 xu
+  - Hoa Mẫu Đơn (peony): 500 xu
+  - Hoa Hồng Vàng (rose-gold): 600 xu
+  - Hoa Hồng Vĩnh Cửu (eternal-rose): 800 xu
+
+**Hệ thống độ khó (theo giá):**
+1. **Dễ** (< 200 xu): 
+   - Thresholds: [0, 300, 700, 1200]
+   - Rewards: [40, 130, 300] xu
+
+2. **Khó** (200-299 xu):
+   - Thresholds: [0, 500, 1000, 1500]
+   - Rewards: [60, 180, 500] xu
+
+3. **Rất Khó** (300-399 xu):
+   - Thresholds: [0, 600, 1200, 2000]
+   - Rewards: [70, 220, 600] xu
+
+4. **Siêu Khó** (400-599 xu):
+   - Thresholds: [0, 700, 1400, 2200]
+   - Rewards: [80, 250, 650] xu
+
+5. **Cực Khó** (≥ 600 xu):
+   - Thresholds: [0, 800, 1600, 2500]
+   - Rewards: [100, 300, 800] xu
+
+### Điểm & Xu:
+- **Water (nước)**: Dùng để tưới hoa (10 nước/lần tưới)
+- **Coins (xu)**: Dùng để mua hoa, nhận từ thưởng giai đoạn
+- **Points**: Điểm tổng hợp (lưu trong `love_points.water`)
+- **Flower Points**: Điểm nước của từng hoa riêng (lưu trong `flower_points.points`)
+
+### Lưu ý quan trọng:
+- Mỗi hoa có điểm riêng (trong `flower_points` table)
+- `claimed_stages` là array chứa IDs dạng: `"${flowerId}_${stageIndex}"` (ví dụ: "rose_1", "orchid_2")
+- Stage 3 (Nở Rộ) threshold dùng để unlock achievement `love_garden_bloom`
+- Water bị trừ khi tưới hoa, cần kiểm tra race condition
+
+## 💻 Coding Conventions
+
+### Components:
+- Luôn dùng `"use client"` directive cho client components
+- File naming: `kebab-case.tsx` cho components
+- TypeScript: Luôn type-safe, không dùng `any` trừ khi cần thiết
+- Import order: React → Next.js → Third-party → Local components → Utils → Types
+
+### API Routes:
+- Đặt trong `app/api/[feature]/route.ts`
+- Luôn return `NextResponse.json()`
+- Error handling: Return status code phù hợp (400, 500)
+- Validation: Kiểm tra body params trước khi xử lý
+
+### State Management:
+- Client components: `useState`, `useEffect`
+- Server components: Fetch data trực tiếp
+- Không dùng global state management lib (Redux, Zustand) - project nhỏ không cần
+
+### Styling:
+- Tailwind CSS với utility classes
+- Component UI dùng shadcn/ui trong `components/ui/`
+- Responsive: Mobile-first approach
+- Dark mode: Hỗ trợ qua `next-themes`
+
+### Database:
+- Luôn dùng `getSupabaseClient()` từ `lib/supabase-client.ts`
+- Service role key để bypass RLS
+- Error handling: Log và throw errors rõ ràng
+
+## 🚨 Important Notes & Gotchas
+
+### Race Conditions:
+- **Water deduction**: Luôn kiểm tra `currentWater >= water_to_add` trước khi update
+- **Flower watering**: Batch sync để tránh nhiều requests cùng lúc
+- Xem: `components/my-flowers.tsx` - có pending sync mechanism
+
+### Version Management:
+- Version được track trong `package.json` và `components/version-badge.tsx`
+- Script update version: `npm run version:update`
+- Changelog trong `version-badge.tsx` component
+- Version hiển thị trong góc màn hình, khi click vào sẽ hiển thị changelog modal với các thay đổi của version đó và các thay đổi của các version trước đó, cập nhật version mới nhất khi deploy lên github ví dụ v3 sẽ lên thành v4
+
+### Image Handling:
+- Upload qua `/api/upload-photo` với compression
+- Images > 2MB được nén tự động
+- Sử dụng `optimized-image.tsx` component
+
+### Notifications:
+- Context: `contexts/NotificationContext.tsx`
+- Component: `components/FloatingNotification.tsx`
+- API: `/api/notifications`
+
+### JSX/React:
+- **QUAN TRỌNG**: Trong JSX text content, không dùng `<` trực tiếp, phải dùng `&lt;` hoặc `{'>'}`
+- Example: `Dễ (&lt; 200 xu)` thay vì `Dễ (< 200 xu)`
+
+## 📝 File Locations Reference
+
+- **Gamification helpers**: `lib/gamification-helpers.ts`
+- **Flower shop component**: `components/flower-shop.tsx`
+- **My flowers component**: `components/my-flowers.tsx`
+- **Flower progress**: `components/flower-progress.tsx`
+- **Gamification page**: `app/gamification/page.tsx`
+- **V4 update log**: `components/v4-update-log.tsx`
+- **Supabase client**: `lib/supabase-client.ts`
+- **Supabase server**: `lib/supabase-server.ts` (nếu có)
+
+## 🔧 Development Commands
+
+```bash
+npm run dev        # Development server
+npm run build      # Production build
+npm run start      # Start production server
+npm run lint       # Lint code
+npm run version:update  # Update version
+```
+
+## 🎯 Best Practices
+
+1. **Error Handling**: Luôn có try-catch cho async operations
+2. **Logging**: Console.log cho debug, xóa khi commit
+3. **Type Safety**: Không dùng `any` trừ khi thật sự cần
+4. **Performance**: 
+   - Lazy load components lớn
+   - Optimize images
+   - Debounce user inputs
+5. **Accessibility**: Dùng semantic HTML, ARIA labels khi cần
+6. **Security**: Không commit API keys, env vars trong code 
+
+## 📚 Version History
+
+- **v4**: Hệ thống hoa mới, giá tăng, 5 loài hoa mới, hệ thống độ khó 5 cấp
+- **v3**: Hệ thống thành tích nhiều giai đoạn
+- **v2**: Nén ảnh, tim bay effect, versioning system
+- **v1**: Initial setup, image compression, upload system
+- tự động tăng version khi có bất kỳ thay đổi vào góc màn hình v4 update log ví dụ v3 sẽ lên thành v4
+
+
+
+
+
+---
+
+*File này được tạo để AI assistant hiểu rõ project structure và conventions. Update khi có thay đổi lớn.*

@@ -1,12 +1,5 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-
-function getSupabase() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  )
-}
+import { getSupabaseClient } from "@/lib/supabase-client"
 
 // 🩵 Đánh dấu đã đọc
 export async function PATCH(req: Request, { params }: { params: { id: string } }) {
@@ -26,7 +19,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     console.log("Parsed read_by:", parsedReadBy)
 
-    const supabase = getSupabase()
+    const supabase = getSupabaseClient()
     
     // ✅ Lấy dữ liệu hiện tại — tránh lỗi 406 nếu không có dòng
     const { data: existingData, error: selectError } = await supabase
@@ -81,7 +74,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
     const { id } = params
-    const supabase = getSupabase()
+    const supabase = getSupabaseClient()
 
     if (id === "all") {
       await supabase.from("notifications").delete().neq("id", "")

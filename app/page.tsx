@@ -8,7 +8,7 @@ import ConfessionMessage from "@/components/confession-message"
 import VersionBadge from "@/components/version-badge"
 import Link from "next/link"
 
-const APP_VERSION = "v3"
+const APP_VERSION = "v4"
 
 export default function Home() {
   const [showMessage, setShowMessage] = useState(false)

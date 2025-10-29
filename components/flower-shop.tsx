@@ -19,55 +19,100 @@ const FLOWERS: Flower[] = [
     id: "rose",
     name: "Hoa Hồng",
     emoji: "🌹",
-    price: 100,
+    price: 150,
     color: "red-500",
     description: "Hoa hồng đỏ - biểu tượng của tình yêu đam mê",
     gradient: "from-red-500 to-pink-600"
   },
   {
-    id: "cherry",
-    name: "Hoa Anh Đào",
-    emoji: "🌸",
-    price: 200,
-    color: "pink-400",
-    description: "Hoa anh đào - sự dịu dàng, ngọt ngào",
-    gradient: "from-pink-400 to-rose-500"
-  },
-  {
-    id: "sunflower",
-    name: "Hoa Hướng Dương",
-    emoji: "🌻",
-    price: 150,
-    color: "yellow-500",
-    description: "Hoa hướng dương - ánh sáng và niềm vui",
-    gradient: "from-yellow-400 to-orange-500"
-  },
-  {
     id: "tulip",
     name: "Hoa Tulip",
     emoji: "🌷",
-    price: 120,
+    price: 180,
     color: "purple-400",
     description: "Hoa tulip - sự hoàn mỹ và tình yêu vĩnh cửu",
     gradient: "from-purple-400 to-pink-500"
   },
   {
-    id: "lavender",
-    name: "Hoa Oải Hương",
-    emoji: "🪻",
-    price: 180,
-    color: "purple-500",
-    description: "Hoa oải hương - sự bình yên và tịnh tâm",
-    gradient: "from-purple-500 to-indigo-600"
+    id: "sunflower",
+    name: "Hoa Hướng Dương",
+    emoji: "🌻",
+    price: 220,
+    color: "yellow-500",
+    description: "Hoa hướng dương - ánh sáng và niềm vui",
+    gradient: "from-yellow-400 to-orange-500"
   },
   {
     id: "jasmine",
     name: "Hoa Nhài",
     emoji: "🤍",
-    price: 160,
+    price: 240,
     color: "white",
     description: "Hoa nhài - sự tinh khiết và vẻ đẹp tự nhiên",
     gradient: "from-gray-100 to-white"
+  },
+  {
+    id: "lavender",
+    name: "Hoa Oải Hương",
+    emoji: "🪻",
+    price: 270,
+    color: "purple-500",
+    description: "Hoa oải hương - sự bình yên và tịnh tâm",
+    gradient: "from-purple-500 to-indigo-600"
+  },
+  {
+    id: "cherry",
+    name: "Hoa Anh Đào",
+    emoji: "🌸",
+    price: 300,
+    color: "pink-400",
+    description: "Hoa anh đào - sự dịu dàng, ngọt ngào",
+    gradient: "from-pink-400 to-rose-500"
+  },
+  {
+    id: "orchid",
+    name: "Hoa Lan",
+    emoji: "🦋",
+    price: 350,
+    color: "purple-600",
+    description: "Hoa lan - sự sang trọng và quý phái",
+    gradient: "from-purple-600 to-pink-400"
+  },
+  {
+    id: "lotus",
+    name: "Hoa Sen",
+    emoji: "🪷",
+    price: 400,
+    color: "pink-500",
+    description: "Hoa sen - sự thanh khiết và giác ngộ",
+    gradient: "from-pink-500 to-rose-600"
+  },
+  {
+    id: "peony",
+    name: "Hoa Mẫu Đơn",
+    emoji: "🌺",
+    price: 500,
+    color: "pink-600",
+    description: "Hoa mẫu đơn - vẻ đẹp và thịnh vượng",
+    gradient: "from-pink-600 to-red-500"
+  },
+  {
+    id: "rose-gold",
+    name: "Hoa Hồng Vàng",
+    emoji: "🌼",
+    price: 600,
+    color: "yellow-600",
+    description: "Hoa hồng vàng - tình bạn và niềm vui",
+    gradient: "from-yellow-500 via-amber-500 to-orange-500"
+  },
+  {
+    id: "eternal-rose",
+    name: "Hoa Hồng Vĩnh Cửu",
+    emoji: "💎",
+    price: 800,
+    color: "rose-700",
+    description: "Hoa hồng vĩnh cửu - tình yêu bất diệt",
+    gradient: "from-rose-700 via-pink-700 to-purple-700"
   }
 ]
 
@@ -130,7 +175,7 @@ export default function FlowerShop({ currentPoints, currentCoins, ownedFlowers, 
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[600px] overflow-y-auto pr-2">
         {FLOWERS.map((flower) => {
           const isOwned = ownedFlowers.includes(flower.id)
           const isFirstFlower = ownedFlowers.length === 0

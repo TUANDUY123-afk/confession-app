@@ -1,13 +1,9 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@supabase/supabase-js"
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+import { getSupabaseClient } from "@/lib/supabase-client"
 
 export async function DELETE() {
   try {
+    const supabase = getSupabaseClient()
     // Delete all notifications using a different approach
     // First, get all notification IDs
     const { data: allNotifications, error: fetchError } = await supabase

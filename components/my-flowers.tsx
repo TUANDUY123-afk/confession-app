@@ -26,51 +26,88 @@ const FLOWERS: { [key: string]: Flower } = {
     id: "rose",
     name: "Hoa Hồng",
     emoji: "🌹",
-    price: 100,
-    gradient: "from-red-500 to-pink-600"
-  },
-  cherry: {
-    id: "cherry",
-    name: "Hoa Anh Đào",
-    emoji: "🌸",
-    price: 200,
-    gradient: "from-pink-400 to-rose-500"
-  },
-  sunflower: {
-    id: "sunflower",
-    name: "Hoa Hướng Dương",
-    emoji: "🌻",
     price: 150,
-    gradient: "from-yellow-400 to-orange-500"
+    gradient: "from-red-500 to-pink-600"
   },
   tulip: {
     id: "tulip",
     name: "Hoa Tulip",
     emoji: "🌷",
-    price: 120,
+    price: 180,
     gradient: "from-purple-400 to-pink-500"
   },
-  lavender: {
-    id: "lavender",
-    name: "Hoa Oải Hương",
-    emoji: "🪻",
-    price: 180,
-    gradient: "from-purple-500 to-indigo-600"
+  sunflower: {
+    id: "sunflower",
+    name: "Hoa Hướng Dương",
+    emoji: "🌻",
+    price: 220,
+    gradient: "from-yellow-400 to-orange-500"
   },
   jasmine: {
     id: "jasmine",
     name: "Hoa Nhài",
     emoji: "🤍",
-    price: 160,
+    price: 240,
     gradient: "from-gray-100 to-white"
+  },
+  lavender: {
+    id: "lavender",
+    name: "Hoa Oải Hương",
+    emoji: "🪻",
+    price: 270,
+    gradient: "from-purple-500 to-indigo-600"
+  },
+  cherry: {
+    id: "cherry",
+    name: "Hoa Anh Đào",
+    emoji: "🌸",
+    price: 300,
+    gradient: "from-pink-400 to-rose-500"
+  },
+  orchid: {
+    id: "orchid",
+    name: "Hoa Lan",
+    emoji: "🦋",
+    price: 350,
+    gradient: "from-purple-600 to-pink-400"
+  },
+  lotus: {
+    id: "lotus",
+    name: "Hoa Sen",
+    emoji: "🪷",
+    price: 400,
+    gradient: "from-pink-500 to-rose-600"
+  },
+  peony: {
+    id: "peony",
+    name: "Hoa Mẫu Đơn",
+    emoji: "🌺",
+    price: 500,
+    gradient: "from-pink-600 to-red-500"
+  },
+  "rose-gold": {
+    id: "rose-gold",
+    name: "Hoa Hồng Vàng",
+    emoji: "🌼",
+    price: 600,
+    gradient: "from-yellow-500 via-amber-500 to-orange-500"
+  },
+  "eternal-rose": {
+    id: "eternal-rose",
+    name: "Hoa Hồng Vĩnh Cửu",
+    emoji: "💎",
+    price: 800,
+    gradient: "from-rose-700 via-pink-700 to-purple-700"
   }
 }
 
 // Define difficulty levels based on price
 const getDifficulty = (price: number) => {
-  if (price >= 200) return { level: "Rất Khó", thresholds: [0, 300, 600, 1000], color: "text-purple-600" }
-  if (price >= 150) return { level: "Khó", thresholds: [0, 200, 500, 800], color: "text-red-600" }
-  return { level: "Dễ", thresholds: [0, 100, 200, 500], color: "text-green-600" }
+  if (price >= 600) return { level: "Cực Khó", thresholds: [0, 800, 1600, 2500], color: "text-purple-900" }
+  if (price >= 400) return { level: "Siêu Khó", thresholds: [0, 700, 1400, 2200], color: "text-purple-700" }
+  if (price >= 300) return { level: "Rất Khó", thresholds: [0, 600, 1200, 2000], color: "text-purple-600" }
+  if (price >= 200) return { level: "Khó", thresholds: [0, 500, 1000, 1500], color: "text-red-600" }
+  return { level: "Dễ", thresholds: [0, 300, 700, 1200], color: "text-green-600" }
 }
 
 export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, onWaterFlower, currentWater, onWaterConsumed }: MyFlowersProps) {
@@ -328,34 +365,64 @@ export default function MyFlowers({ ownedFlowers, totalPoints, onSelectFlower, o
       sunflower: ["🌱", "🌿", "🌾", "🌻"],
       tulip: ["🌱", "🌿", "🌷", "🌷"],
       lavender: ["🌱", "🌿", "🪻", "🪻"],
-      jasmine: ["🌱", "🌿", "🤍", "🤍"]
+      jasmine: ["🌱", "🌿", "🤍", "🤍"],
+      orchid: ["🌱", "🌿", "🌺", "🦋"],
+      lotus: ["🌱", "🌿", "🌷", "🪷"],
+      peony: ["🌱", "🌿", "🌺", "🌺"],
+      "rose-gold": ["🌱", "🌿", "🌼", "🌼"],
+      "eternal-rose": ["🌱", "🌿", "💎", "💎"]
     }
     
     const emojis = stageEmojis[flower.id] || ["🌱", "🌿", "🌺", "🌹"]
     
-    if (points >= thresholds[3]) return { 
-      stage: "Nở Rộ", 
-      emoji: emojis[3], // Fully bloomed flower
-      progress: 100,
-      sparkles: "✨✨✨"
+    // Calculate progress similar to FlowerProgress component
+    let currentThreshold = 0
+    let nextThreshold = thresholds[1]
+    let stageName = "Mầm Non"
+    let stageIndex = 0
+    
+    if (points >= thresholds[3]) {
+      currentThreshold = thresholds[3]
+      nextThreshold = thresholds[3] // Max level - progress will be 100%
+      stageName = "Nở Rộ"
+      stageIndex = 3
+    } else if (points >= thresholds[2]) {
+      currentThreshold = thresholds[2]
+      nextThreshold = thresholds[3]
+      stageName = "Chớm Nở"
+      stageIndex = 2
+    } else if (points >= thresholds[1]) {
+      currentThreshold = thresholds[1]
+      nextThreshold = thresholds[2]
+      stageName = "Phát Triển"
+      stageIndex = 1
+    } else {
+      currentThreshold = thresholds[0]
+      nextThreshold = thresholds[1]
+      stageName = "Mầm Non"
+      stageIndex = 0
     }
-    if (points >= thresholds[2]) return { 
-      stage: "Chớm Nở", 
-      emoji: emojis[2], // Flowering
-      progress: ((points - thresholds[2]) / (thresholds[3] - thresholds[2])) * 100,
-      sparkles: "✨✨"
+    
+    // Calculate progress percentage - same logic as FlowerProgress component
+    const progress = (nextThreshold > 0 && nextThreshold > currentThreshold)
+      ? Math.max(0, Math.min(100, ((points - currentThreshold) / (nextThreshold - currentThreshold)) * 100))
+      : points >= thresholds[3] ? 100 : 0
+    
+    // Map stage index to emoji and sparkles
+    const stageMap: { [key: number]: { emoji: string, sparkles: string } } = {
+      3: { emoji: emojis[3], sparkles: "✨✨✨" },
+      2: { emoji: emojis[2], sparkles: "✨✨" },
+      1: { emoji: emojis[1], sparkles: "✨" },
+      0: { emoji: emojis[0], sparkles: "" }
     }
-    if (points >= thresholds[1]) return { 
-      stage: "Phát Triển", 
-      emoji: emojis[1], // Growing plant
-      progress: ((points - thresholds[1]) / (thresholds[2] - thresholds[1])) * 100,
-      sparkles: "✨"
-    }
-    return { 
-      stage: "Mầm Non", 
-      emoji: emojis[0], // Seedling
-      progress: ((points - thresholds[0]) / (thresholds[1] - thresholds[0])) * 100,
-      sparkles: ""
+    
+    const stageInfo = stageMap[stageIndex] || { emoji: emojis[0], sparkles: "" }
+    
+    return {
+      stage: stageName,
+      emoji: stageInfo.emoji,
+      progress: progress,
+      sparkles: stageInfo.sparkles
     }
   }
 

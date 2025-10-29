@@ -1,5 +1,6 @@
 import { getSupabaseClient } from "@/lib/supabase-client"
 import { type NextRequest, NextResponse } from "next/server"
+import { addPoints, updateAchievement } from "@/lib/gamification-helpers"
 
 interface Comment {
   id: string
@@ -85,6 +86,28 @@ export async function POST(request: NextRequest) {
     }
 
     await saveComment(photoUrl, newComment)
+
+    // Award water points and update achievement for photo comments
+    try {
+      await addPoints({
+        activity_type: 'comment_photo',
+        points: 5,
+        description: 'Comment ảnh +5 nước 💧'
+      })
+      
+      // Update comment_king achievement (photo comments also count)
+      try {
+        console.log('[Comment Photo API] Updating comment_king achievement')
+        await updateAchievement({
+          achievement_type: 'comment_king',
+          progress_increment: 0, // Will count from database
+        })
+      } catch (err) {
+        console.error('[Comment Photo API] Error updating comment_king achievement:', err)
+      }
+    } catch (err) {
+      console.error('Error awarding water for photo comment:', err)
+    }
 
     return NextResponse.json({ comment: newComment })
   } catch (error) {
