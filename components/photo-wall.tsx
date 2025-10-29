@@ -28,7 +28,11 @@ export default function PhotoWall() {
 
   const loadPhotos = useCallback(async () => {
     try {
-      const response = await fetch("/api/list-photos")
+      // OPTIMIZED: No cache to get fresh data with likes/comments
+      const response = await fetch("/api/list-photos", { 
+        cache: 'no-store',
+        next: { revalidate: 0 }
+      })
       const data = await response.json()
 
       const formatted = (data.photos || []).map((p: any) => ({

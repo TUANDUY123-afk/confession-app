@@ -131,7 +131,7 @@ export default function GamificationPage() {
 
   const fetchPoints = async () => {
     try {
-      const res = await fetch("/api/gamification/points")
+      const res = await fetch("/api/gamification/points", { cache: 'force-cache' })
       const data = await res.json()
       setTotalPoints(data.water || 0) // Change to water
       setTotalCoins(data.coins || 0)
@@ -140,7 +140,7 @@ export default function GamificationPage() {
       
       // Fetch flower water data
       if (data.owned_flowers && data.owned_flowers.length > 0) {
-        const flowerRes = await fetch("/api/gamification/flower-points")
+        const flowerRes = await fetch("/api/gamification/flower-points", { cache: 'force-cache' })
         const flowerData = await flowerRes.json()
         const waterMap: { [key: string]: number } = {}
         flowerData.forEach((item: any) => {
@@ -192,7 +192,7 @@ export default function GamificationPage() {
       
       // Sync flower water data from server to ensure accuracy
       try {
-        const res = await fetch("/api/gamification/flower-points")
+        const res = await fetch("/api/gamification/flower-points", { cache: 'force-cache' })
         const flowerData = await res.json()
         const waterMap: { [key: string]: number } = {}
         flowerData.forEach((item: any) => {

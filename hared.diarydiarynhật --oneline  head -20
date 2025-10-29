@@ -1,0 +1,30 @@
+[33mf2b60a8[m[33m ([m[1;35mrefs/stash[m[33m)[m WIP on main: 9e353b9 Fix daysUntil calculation: normalize dates to midnight to prevent timezone/day offset issues
+[33mb80dab5[m index on main: 9e353b9 Fix daysUntil calculation: normalize dates to midnight to prevent timezone/day offset issues
+[33m9e353b9[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m Fix daysUntil calculation: normalize dates to midnight to prevent timezone/day offset issues
+[33m4a708e9[m Disable auto-version: GitHub Actions now only runs manually via workflow_dispatch
+[33m262aba0[m Fix calendar popup displaying wrong date - use formatDateString to avoid timezone issues
+[33m4e4156a[m Update gamification page title to 'VÆ°á»n TĂ¬nh YĂªu' and fix TypeScript errors in points route
+[33mfd7252e[m Update achievements to match the app: write diary, like, comment, upload photos, and love garden bloom
+[33maf49f50[m Remove duplicate 'How to earn points' section at the bottom of gamification page
+[33m7ae0f81[m Add beautiful UI section displaying ways to earn water points in gamification page
+[33m5e01442[m Add floating animation and glow effect to new entry button on shared-diary page
+[33m27c3728[m Move new entry button to bottom-right corner on shared-diary page, temporarily disable test water buttons
+[33mb79516c[m Add water rewards for various activities: like (+3), comment (+5), write diary (+20), upload photo (+10)
+[33m4b43b56[m Fix race condition: Only sync localWater when water increases, not decreases, to prevent override during watering
+[33m0408f0c[m Batch sync: Accumulate multiple clicks into single request (e.g., +10+10+10 = +30 in one sync)
+[33md432d12[m Fix flower water display sync: Fetch server data after watering to ensure accurate display
+[33m4a11720[m Implement offline-first sync with localStorage: Save pending water changes locally, sync to server when user stops watering
+[33ma387dc2[m Fix: Hien thi tong nuoc cap nhat ngay lap tuc khi tuoi cay
+[33m1da319e[m Fix: Tinh toan nuoc co san chinh xac, bao gom tat ca pending syncs
+[33m740464d[m Tá»‘i Æ°u UI khi tÆ°á»›i cĂ¢y: Loáº¡i bá» hiá»‡n tÆ°á»£ng thanh tiáº¿n Ä‘á»™ lĂ¹i láº¡i do server cháº­m
+[33mf2c149e[m Táº¯t auto-deploy, chá»‰ deploy khi Ä‘Æ°á»£c yĂªu cáº§u
+[33mad39bf0[m Add comprehensive Vercel deployment guide
+[33m98b1aff[m Fix LoveTree synchronization - use flower-specific water points instead of global total
+[33m182d7ba[m Add distinct flower icons for each growth stage and sync between MyFlowers and LoveTree components
+[33m0064fb0[m Fix flower icons to match their actual flower types
+[33m7ff6261[m Remove pot icon behind flowers - simplify flower display
+[33m836b54f[m Update flower icons to more distinctive emojis
+[33m24a4be8[m Add pot containers and animations for flowers - inspired by Khu VÆ°á»n TrĂªn MĂ¢y game
+[33mae3ea0d[m Fix water consumption sync: Track local water state and deduct immediately on click
+[33m59095e1[m Change watering mechanism: Allow rapid clicking, sync to server only when user stops clicking
+[33m9872727[m Optimize watering mechanism: Add debounce, smooth UI updates, individual flower water tracking

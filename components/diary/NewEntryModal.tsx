@@ -1,28 +1,43 @@
 "use client"
 
 import { useState } from "react"
-import { X } from "lucide-react"
+import { X, Palette } from "lucide-react"
 import { saveDiaryEntry } from "@/utils/storage"
 import { getCurrentUser } from "@/utils/user"
 import MoodBackground from "@/components/MoodBackground"
 import { useNotifications } from "@/contexts/NotificationContext"
 
-const moods = [
-  { emoji: "🥰", label: "Yêu thương" },
-  { emoji: "😊", label: "Hạnh phúc" },
-  { emoji: "🥺", label: "Nhớ nhung" },
-  { emoji: "😡", label: "Giận dỗi" },
-  { emoji: "😭", label: "Buồn" },
+const emojis = [
+  "🥰", "😊", "😍", "🥺", "😡", "😭", "😎", "🤗", "🎉", "💫",
+  "❤️", "💕", "💖", "💗", "💓", "✨", "🌟", "💯", "🔥", "🎈",
+  "🌙", "☀️", "🌈", "🎊", "🎁", "🎂", "🌸", "🌹", "🌺", "🌻"
+]
+
+const colors = [
+  { name: "Hồng", gradient: "from-pink-400 to-rose-500", value: "pink" },
+  { name: "Tím", gradient: "from-purple-400 to-pink-500", value: "purple" },
+  { name: "Xanh dương", gradient: "from-blue-400 to-cyan-500", value: "blue" },
+  { name: "Xanh lá", gradient: "from-green-400 to-emerald-500", value: "green" },
+  { name: "Vàng", gradient: "from-yellow-400 to-orange-500", value: "yellow" },
+  { name: "Đỏ", gradient: "from-red-400 to-pink-600", value: "red" },
+  { name: "Cam", gradient: "from-orange-400 to-red-500", value: "orange" },
+  { name: "Hồng nhạt", gradient: "from-pink-300 to-rose-400", value: "light-pink" },
 ]
 
 export default function NewEntryModal({ onClose, onAdd }) {
   const [content, setContent] = useState("")
-  const [mood, setMood] = useState("Yêu thương")
+  const [mood, setMood] = useState("Tâm trạng của bạn")
+  const [emoji, setEmoji] = useState("🥰")
+  const [moodColor, setMoodColor] = useState("pink")
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const [showColorPicker, setShowColorPicker] = useState(false)
+  const [customMoodName, setCustomMoodName] = useState("")
   const [saving, setSaving] = useState(false)
   const { addNotification } = useNotifications()
 
   const handleSubmit = async () => {
     if (!content.trim()) return alert("Hãy viết gì đó 💌")
+    if (!customMoodName.trim()) return alert("Hãy đặt tên cho tâm trạng của bạn 💭")
 
     setSaving(true)
     const generateUUID = () => {
@@ -33,15 +48,18 @@ export default function NewEntryModal({ onClose, onAdd }) {
       })
     }
 
-    // ✅ Sửa lỗi: getCurrentUser là async => cần await
     const currentUser = await getCurrentUser()
     const currentUserName = currentUser?.name || "Ẩn danh"
+
+    const finalMood = `${emoji} ${customMoodName.trim()}`
 
     const newEntry = {
       id: generateUUID(),
       author: currentUserName,
       date: new Date().toISOString(),
-      mood,
+      mood: finalMood,
+      moodColor: moodColor,
+      moodEmoji: emoji,
       content,
     }
 
@@ -50,7 +68,6 @@ export default function NewEntryModal({ onClose, onAdd }) {
     onClose()
     setSaving(false)
 
-    // ✅ Hiển thị tên đúng thay vì [object Promise]
     await addNotification({
       type: "diary",
       message: `${currentUserName} vừa đăng một bài viết mới 💌`,
@@ -58,59 +75,126 @@ export default function NewEntryModal({ onClose, onAdd }) {
     })
   }
 
+  const selectedColor = colors.find(c => c.value === moodColor)
+
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-50">
-      <MoodBackground mood={mood} />
+    <div className="fixed inset-0 flex items-center justify-center z-50 overflow-y-auto py-8">
+      {/* Dynamic Background based on selected color */}
+      <div 
+        className={`absolute inset-0 bg-gradient-to-br ${selectedColor?.gradient || 'from-purple-500 to-pink-500'} transition-all duration-500`}
+      />
 
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal box */}
-      <div className="relative bg-white/90 rounded-2xl shadow-xl p-6 max-w-md w-11/12 z-10 animate-fade-in">
+      <div className="relative bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-6 max-w-lg w-11/12 z-10 animate-fade-in my-auto">
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-600 hover:text-gray-900"
+          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 p-2 rounded-xl hover:bg-gray-100 transition-all"
         >
-          <X size={20} />
+          <X size={22} />
         </button>
 
-        <h2 className="text-xl font-semibold text-center mb-4 text-pink-600">
-          💌 Viết nhật ký
-        </h2>
-
-        {/* Mood picker */}
-        <div className="flex justify-around mb-4">
-          {moods.map((m) => (
-            <button
-              key={m.label}
-              onClick={() => setMood(m.label)}
-              className={`text-3xl transition-transform ${
-                mood === m.label ? "scale-125 drop-shadow-lg" : "opacity-70"
-              }`}
-              title={m.label}
-            >
-              {m.emoji}
-            </button>
-          ))}
+        <div className="flex items-center gap-3 mb-6">
+          <div className="text-5xl">{emoji}</div>
+          <div>
+            <h2 className="text-2xl font-black text-gray-800">Viết nhật ký mới</h2>
+            <p className="text-sm text-gray-500">Chia sẻ tâm trạng của bạn 💕</p>
+          </div>
         </div>
 
-        {/* Input */}
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          placeholder="Hôm nay bạn muốn viết gì cho người thương... 💖"
-          className="w-full p-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-300 resize-none bg-white/80"
-          rows={5}
-          disabled={saving}
-        />
+        {/* Custom Mood Name Input */}
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Tên tâm trạng
+          </label>
+          <input
+            type="text"
+            value={customMoodName}
+            onChange={(e) => setCustomMoodName(e.target.value)}
+            placeholder="VD: Hôm nay thật tuyệt, Cảm thấy hạnh phúc..."
+            className="w-full px-4 py-3 rounded-2xl border-2 border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 transition-all text-sm bg-white"
+          />
+        </div>
 
-        {/* Button */}
+        {/* Emoji Picker */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-semibold text-gray-700">
+              Biểu tượng
+            </label>
+            <button
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="text-3xl hover:scale-110 transition-transform"
+            >
+              {emoji}
+            </button>
+          </div>
+          {showEmojiPicker && (
+            <div className="grid grid-cols-6 gap-2 max-h-40 overflow-y-auto p-3 bg-gray-50 rounded-2xl border-2 border-gray-200">
+              {emojis.map((e) => (
+                <button
+                  key={e}
+                  onClick={() => {
+                    setEmoji(e)
+                    setShowEmojiPicker(false)
+                  }}
+                  className="text-3xl hover:scale-125 transition-transform p-2 rounded-xl hover:bg-white"
+                >
+                  {e}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Color Picker */}
+        <div className="mb-5">
+          <div className="flex items-center gap-2 mb-2">
+            <Palette className="w-4 h-4 text-gray-700" />
+            <label className="block text-sm font-semibold text-gray-700">
+              Màu sắc
+            </label>
+          </div>
+          <div className="grid grid-cols-4 gap-2">
+            {colors.map((color) => (
+              <button
+                key={color.value}
+                onClick={() => setMoodColor(color.value)}
+                className={`h-12 rounded-2xl bg-gradient-to-br ${color.gradient} transition-all ${
+                  moodColor === color.value ? 'ring-4 ring-gray-400 scale-110 shadow-lg' : 'hover:scale-105'
+                }`}
+                title={color.name}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Content Input */}
+        <div className="mb-5">
+          <label className="block text-sm font-semibold text-gray-700 mb-2">
+            Nội dung nhật ký
+          </label>
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder="Viết về những khoảnh khắc đáng nhớ hôm nay... 💖"
+            className="w-full p-4 rounded-2xl border-2 border-gray-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200 resize-none bg-white transition-all"
+            rows={6}
+            disabled={saving}
+          />
+        </div>
+
+        {/* Submit Button */}
         <button
           onClick={handleSubmit}
           disabled={saving}
-          className="mt-4 w-full py-2 rounded-full bg-gradient-to-r from-pink-500 to-rose-400 text-white font-medium shadow-lg hover:scale-105 transition-all disabled:opacity-50"
+          className={`w-full py-4 rounded-2xl text-white font-bold text-lg shadow-2xl hover:shadow-3xl transition-all disabled:opacity-50 bg-gradient-to-r ${
+            selectedColor?.gradient || 'from-purple-500 to-pink-500'
+          }`}
         >
-          {saving ? "Đang gửi..." : "Gửi nhật ký ✨"}
+          {saving ? "Đang gửi..." : `${emoji} Gửi nhật ký`}
         </button>
       </div>
     </div>

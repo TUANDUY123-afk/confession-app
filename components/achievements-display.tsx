@@ -26,7 +26,7 @@ export default function AchievementsDisplay() {
 
   const fetchAchievements = async () => {
     try {
-      const res = await fetch("/api/gamification/achievements")
+      const res = await fetch("/api/gamification/achievements", { cache: 'force-cache' })
       const data = await res.json()
       setAchievements(data)
     } catch (err) {

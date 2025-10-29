@@ -51,16 +51,41 @@ async function saveDiaryLikes(entryId: string, likeCount: number) {
   }
 }
 
-// 📍 GET - Lấy số lượt thích
+// 📍 GET - Lấy số lượt thích và trạng thái like của user hiện tại
 export async function GET(request: NextRequest) {
   try {
     const entryId = request.nextUrl.searchParams.get("entryId")
+    const userName = request.nextUrl.searchParams.get("userName")
+    
     if (!entryId) {
       return NextResponse.json({ error: "No entryId provided" }, { status: 400 })
     }
 
-    const likes = await getDiaryLikes(entryId)
-    return NextResponse.json({ count: likes })
+    const supabase = getSupabaseClient()
+    
+    // Get total count
+    const { count } = await supabase
+      .from("diary_likes")
+      .select("*", { count: 'exact', head: true })
+      .eq("entry_id", entryId)
+    
+    // Check if current user liked
+    let likedByCurrentUser = false
+    if (userName) {
+      const { data } = await supabase
+        .from("diary_likes")
+        .select("id")
+        .eq("entry_id", entryId)
+        .eq("user_name", userName)
+        .maybeSingle()
+      
+      likedByCurrentUser = !!data
+    }
+
+    return NextResponse.json({ 
+      count: count || 0,
+      likedByCurrentUser
+    })
   } catch (error) {
     console.error("[v0] Error fetching diary likes:", error)
     return NextResponse.json({ error: "Failed to fetch likes" }, { status: 500 })
@@ -85,6 +110,8 @@ export async function POST(request: NextRequest) {
       .eq("entry_id", entryId)
       .eq("user_name", userName)
       .maybeSingle()
+    
+    console.log("[Like API] Existing like check:", existing, "for user:", userName, "entry:", entryId)
 
     let liked = false
     let currentCount = 0

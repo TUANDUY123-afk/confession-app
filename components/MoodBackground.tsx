@@ -6,6 +6,11 @@ export default function MoodBackground({ mood }: { mood: string }) {
     "Yêu thương": "from-red-300 to-pink-400",
     "Giận dỗi": "from-orange-300 to-red-400",
     "Nhớ nhung": "from-purple-300 to-fuchsia-400",
+    "Siêu yêu": "from-rose-400 to-pink-500",
+    "Cool ngầu": "from-cyan-300 to-blue-400",
+    "Ôm ấp": "from-yellow-300 to-orange-300",
+    "Vui mừng": "from-yellow-400 to-pink-400",
+    "Tự do": "from-green-300 to-emerald-400",
   }
 
   return (

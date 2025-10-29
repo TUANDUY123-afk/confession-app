@@ -55,10 +55,10 @@ export default function LoveStoryPage() {
     setIsLoading(false)
   }, [])
 
-  // Load events from API
+  // Load events from API with caching
   const fetchEvents = async () => {
     try {
-      const res = await fetch("/api/love-events")
+      const res = await fetch("/api/love-events", { cache: 'force-cache' })
       const { data } = await res.json()
       setEvents(data || [])
     } catch (error) {

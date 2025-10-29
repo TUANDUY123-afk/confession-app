@@ -24,7 +24,7 @@ export default function LoveEvents() {
   async function fetchEvents() {
     setLoading(true)
     try {
-      const res = await fetch("/api/love-events")
+      const res = await fetch("/api/love-events", { cache: 'force-cache' })
       const { data, error } = await res.json()
       if (error) console.error("Error fetching events:", error)
       else {

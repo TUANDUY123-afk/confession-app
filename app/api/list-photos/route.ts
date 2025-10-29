@@ -25,29 +25,42 @@ export async function GET() {
           throw error
         }
 
-        // Load comments for each photo
-        const photosWithData = await Promise.all(
-          (photos || []).map(async (photo) => {
-            const { data: comments } = await supabase
-              .from("comments")
-              .select("id, text, author, created_at")
-              .eq("photo_url", photo.url)
-              .order("created_at", { ascending: false })
+        // ✅ OPTIMIZATION: Load all comments and likes in batch
+        const photoUrls = photos?.map(p => p.url) || []
+        
+        // Get all comments for all photos in one query
+        const { data: allComments } = await supabase
+          .from("comments")
+          .select("id, text, author, created_at, photo_url")
+          .in("photo_url", photoUrls)
+          .order("created_at", { ascending: false })
+        
+        // Get all likes for all photos in one query
+        const { data: allLikes } = await supabase
+          .from("likes")
+          .select("photo_url, like_count")
+          .in("photo_url", photoUrls)
 
-            // Load like count
-            const { data: likeData } = await supabase
-              .from("likes")
-              .select("like_count")
-              .eq("photo_url", photo.url)
-              .single()
+        // Create lookup maps
+        const commentsMap = new Map<string, any[]>()
+        allComments?.forEach(comment => {
+          if (!commentsMap.has(comment.photo_url)) {
+            commentsMap.set(comment.photo_url, [])
+          }
+          commentsMap.get(comment.photo_url)!.push(comment)
+        })
 
-            return {
-              ...photo,
-              comments: comments || [],
-              likes: likeData?.like_count || 0,
-            }
-          })
-        )
+        const likesMap = new Map<string, number>()
+        allLikes?.forEach(like => {
+          likesMap.set(like.photo_url, like.like_count || 0)
+        })
+
+        // Combine data
+        const photosWithData = (photos || []).map(photo => ({
+          ...photo,
+          comments: commentsMap.get(photo.url) || [],
+          likes: likesMap.get(photo.url) || 0,
+        }))
 
         return NextResponse.json({ photos: photosWithData })
       } catch (err) {

@@ -34,12 +34,17 @@ export default function DiaryCommentsSection({
   }, [])
 
   useEffect(() => {
-    loadComments()
+    // Debounce loading comments
+    const timeoutId = setTimeout(() => {
+      loadComments()
+    }, 200)
+
+    return () => clearTimeout(timeoutId)
   }, [entryId])
 
   const loadComments = async () => {
     try {
-      const res = await fetch(`/api/diary-comments?entryId=${entryId}`)
+      const res = await fetch(`/api/diary-comments?entryId=${entryId}`, { cache: 'force-cache' })
       const data = await res.json()
       if (data.comments) setComments(data.comments)
     } catch (error) {
@@ -129,8 +134,11 @@ export default function DiaryCommentsSection({
   }
 
   return (
-    <div className="bg-white/80 rounded-2xl shadow-md p-4 mt-4 border border-pink-200">
-      <h3 className="font-semibold text-pink-600 mb-3">💬 Bình luận</h3>
+    <div className="bg-gradient-to-br from-pink-50 to-white rounded-3xl shadow-md p-5 mt-5 border border-pink-200">
+      <div className="flex items-center gap-2 mb-4">
+        <MessageCircle size={20} className="text-pink-600" />
+        <h3 className="font-bold text-pink-600">Bình luận</h3>
+      </div>
 
       {/* Comment input */}
       <div className="flex gap-2 mb-4">
@@ -140,11 +148,11 @@ export default function DiaryCommentsSection({
           onChange={(e) => setNewComment(e.target.value)}
           onKeyPress={(e) => e.key === "Enter" && handleAddComment()}
           placeholder="Viết bình luận..."
-          className="flex-1 px-3 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-pink-300 text-sm"
+          className="flex-1 px-4 py-3 rounded-xl border-2 border-gray-200 focus:ring-2 focus:ring-pink-400 focus:border-transparent text-sm bg-white transition-all"
         />
         <button
           onClick={handleAddComment}
-          className="px-4 py-2 rounded-lg bg-pink-500 text-white text-sm hover:bg-pink-600 transition-colors"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 text-white text-sm font-semibold hover:shadow-lg hover:scale-105 transition-all"
         >
           Gửi
         </button>
