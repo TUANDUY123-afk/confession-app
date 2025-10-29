@@ -42,7 +42,15 @@ export default function SharedDiaryPage() {
         cache: 'no-store',
         next: { revalidate: 0 }
       })
-      const data = await res.json()
+      if (!res.ok) {
+        console.error("loadEntries: Response not ok", res.status)
+        setEntries([])
+        return
+      }
+      const data = await res.json().catch(err => {
+        console.error("loadEntries: JSON parse error", err)
+        return []
+      })
       setEntries(Array.isArray(data) ? data : [])
     } catch (err) {
       console.error("Lỗi khi tải nhật ký:", err)

@@ -128,16 +128,35 @@ export async function POST(request: NextRequest) {
       liked = true
       
       // Award water points for liking
+      // Check if this is a comment or regular diary entry
+      const isComment = entryId.startsWith('comment-')
+      
       try {
         await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/gamification/points`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            activity_type: 'like_diary',
-            points: 3,
-            description: 'Like nhật ký +3 nước 💧'
+            activity_type: isComment ? 'like_comment' : 'like_diary',
+            points: isComment ? 2 : 3,
+            description: isComment ? 'Like comment +2 nước 💧' : 'Like nhật ký +3 nước 💧'
           })
         })
+        
+        // Update like_master achievement (only for diary entries, not comments)
+        if (!isComment) {
+          try {
+            await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/gamification/achievements`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                achievement_type: 'like_master',
+                progress_increment: 1,
+              })
+            })
+          } catch (err) {
+            console.error('Error updating like_master achievement:', err)
+          }
+        }
       } catch (err) {
         console.error('Error awarding water for like:', err)
       }

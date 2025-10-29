@@ -32,7 +32,14 @@ export default function LovePointsDisplay({ refreshKey, currentWater }: LovePoin
   const fetchPoints = async () => {
     try {
       const res = await fetch("/api/gamification/points")
-      const data = await res.json()
+      if (!res.ok) {
+        console.error("fetchPoints: Response not ok", res.status)
+        return
+      }
+      const data = await res.json().catch(err => {
+        console.error("fetchPoints: JSON parse error", err)
+        return { water: 0, coins: 0, current_streak: 0, longest_streak: 0 }
+      })
       setPointsData(data)
     } catch (err) {
       console.error("Error fetching points:", err)

@@ -3,47 +3,78 @@ import { NextResponse } from "next/server"
 
 const COUPLE_ID = "default_couple"
 
-// Achievement definitions
-export const ACHIEVEMENTS = [
+// Achievement level structure: { target, reward }
+type AchievementLevel = { target: number; reward: number; label: string }
+
+interface AchievementDef {
+  type: string
+  name: string
+  description: string
+  icon: string
+  levels: AchievementLevel[]
+}
+
+// Achievement definitions with multiple levels
+export const ACHIEVEMENTS: AchievementDef[] = [
   {
     type: "daily_diary",
     name: "Người viết nhật ký",
-    description: "Viết nhật ký 7 ngày liên tục",
+    description: "Viết nhật ký liên tục",
     icon: "📝",
-    target: 7,
-    points_reward: 150,
+    levels: [
+      { target: 3, reward: 50, label: "Giai đoạn 1" },
+      { target: 7, reward: 100, label: "Giai đoạn 2" },
+      { target: 14, reward: 150, label: "Giai đoạn 3" },
+      { target: 30, reward: 200, label: "Giai đoạn 4" },
+    ],
   },
   {
     type: "like_master",
     name: "Trái tim nồng nàn",
-    description: "Like 50 bài nhật ký",
+    description: "Like bài nhật ký",
     icon: "❤️",
-    target: 50,
-    points_reward: 100,
+    levels: [
+      { target: 5, reward: 30, label: "Giai đoạn 1" },
+      { target: 15, reward: 60, label: "Giai đoạn 2" },
+      { target: 30, reward: 100, label: "Giai đoạn 3" },
+      { target: 50, reward: 150, label: "Giai đoạn 4" },
+    ],
   },
   {
     type: "comment_king",
     name: "Bình luận viên",
-    description: "Comment 30 bài nhật ký",
+    description: "Comment bài nhật ký",
     icon: "💬",
-    target: 30,
-    points_reward: 200,
+    levels: [
+      { target: 3, reward: 30, label: "Giai đoạn 1" },
+      { target: 10, reward: 60, label: "Giai đoạn 2" },
+      { target: 20, reward: 100, label: "Giai đoạn 3" },
+      { target: 35, reward: 150, label: "Giai đoạn 4" },
+    ],
   },
   {
     type: "photo_collector",
     name: "Người kể chuyện",
-    description: "Upload 20 ảnh kỷ niệm",
+    description: "Upload ảnh kỷ niệm",
     icon: "📸",
-    target: 20,
-    points_reward: 300,
+    levels: [
+      { target: 3, reward: 40, label: "Giai đoạn 1" },
+      { target: 10, reward: 80, label: "Giai đoạn 2" },
+      { target: 20, reward: 120, label: "Giai đoạn 3" },
+      { target: 35, reward: 180, label: "Giai đoạn 4" },
+    ],
   },
   {
     type: "love_garden_bloom",
     name: "Vườn tình yêu nở hoa",
     description: "Hoa đạt giai đoạn Nở Rộ",
     icon: "🌺",
-    target: 3,
-    points_reward: 250,
+    levels: [
+      { target: 1, reward: 80, label: "Giai đoạn 1" },
+      { target: 2, reward: 150, label: "Giai đoạn 2" },
+      { target: 3, reward: 220, label: "Giai đoạn 3" },
+      { target: 5, reward: 300, label: "Giai đoạn 4" },
+    ],
   },
 ]
 
@@ -61,15 +92,43 @@ export async function GET() {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     
-    // Merge with achievement definitions
+    // Merge with achievement definitions and calculate level progress
     const achievementsWithDef = ACHIEVEMENTS.map(def => {
       const progress = data?.find(a => a.achievement_type === def.type)
+      const currentProgress = progress?.progress || 0
+      const unlockedLevels = (progress?.metadata as any)?.unlocked_levels || []
+      
+      // Calculate which levels are unlocked
+      const levelsStatus = def.levels.map((level, index) => {
+        const isUnlocked = unlockedLevels.includes(index) || currentProgress >= level.target
+        return {
+          ...level,
+          levelIndex: index,
+          isUnlocked,
+        }
+      })
+      
+      // Find current level (highest unlocked)
+      const currentLevelIndex = levelsStatus
+        .map((l, i) => l.isUnlocked ? i : -1)
+        .filter(i => i >= 0)
+        .sort((a, b) => b - a)[0] ?? -1
+      
+      const nextLevel = currentLevelIndex < def.levels.length - 1 
+        ? def.levels[currentLevelIndex + 1] 
+        : null
+      
       return {
-        ...def,
-        progress: progress?.progress || 0,
-        target: def.target,
-        unlocked: progress?.unlocked || false,
-        unlocked_at: progress?.unlocked_at,
+        type: def.type,
+        name: def.name,
+        description: def.description,
+        icon: def.icon,
+        progress: currentProgress,
+        levels: def.levels,
+        levelsStatus,
+        currentLevelIndex: currentLevelIndex >= 0 ? currentLevelIndex : -1,
+        nextLevel,
+        totalLevels: def.levels.length,
       }
     })
     
@@ -102,10 +161,75 @@ export async function POST(request: Request) {
       .select("*")
       .eq("couple_id", COUPLE_ID)
       .eq("achievement_type", achievement_type)
-      .single()
+      .maybeSingle()
     
-    const newProgress = (currentProgress?.progress || 0) + progress_increment
-    const isUnlocked = newProgress >= achievementDef.target && !currentProgress?.unlocked
+    const unlockedLevels = (currentProgress?.metadata as any)?.unlocked_levels || []
+    
+    // Special handling for daily_diary and love_garden_bloom
+    let newProgress = (currentProgress?.progress || 0)
+    if (achievement_type === "daily_diary") {
+      // Get current streak from love_points
+      const { data: pointsData } = await supabase
+        .from("love_points")
+        .select("current_streak")
+        .eq("couple_id", COUPLE_ID)
+        .maybeSingle()
+      
+      const currentStreak = pointsData?.current_streak || 0
+      newProgress = currentStreak // Don't cap, allow to see all progress
+    } else if (achievement_type === "love_garden_bloom") {
+      // Check how many flowers are at stage 3 (Nở Rộ)
+      const { data: allFlowers } = await supabase
+        .from("flower_points")
+        .select("flower_id, points")
+        .eq("couple_id", COUPLE_ID)
+      
+      const flowerPrices: { [key: string]: number } = {
+        rose: 100,
+        tulip: 120,
+        sunflower: 150,
+        jasmine: 160,
+        lavender: 180,
+        cherry: 200,
+      }
+      
+      let flowersAtStage3 = 0
+      if (allFlowers) {
+        for (const flower of allFlowers) {
+          const price = flowerPrices[flower.flower_id] || 100
+          let stage3Threshold = 500
+          if (price >= 200) {
+            stage3Threshold = 1000
+          } else if (price >= 150) {
+            stage3Threshold = 800
+          }
+          
+          if (flower.points >= stage3Threshold) {
+            flowersAtStage3++
+          }
+        }
+      }
+      
+      newProgress = flowersAtStage3
+    } else {
+      // Normal increment for other achievements
+      newProgress = (currentProgress?.progress || 0) + progress_increment
+    }
+    
+    // Check which levels should be unlocked
+    const newlyUnlockedLevels: number[] = []
+    let totalReward = 0
+    
+    achievementDef.levels.forEach((level, index) => {
+      if (!unlockedLevels.includes(index) && newProgress >= level.target) {
+        newlyUnlockedLevels.push(index)
+        totalReward += level.reward
+      }
+    })
+    
+    const allUnlockedLevels = [...unlockedLevels, ...newlyUnlockedLevels]
+    const maxTarget = Math.max(...achievementDef.levels.map(l => l.target))
+    const isFullyUnlocked = newProgress >= maxTarget
     
     // Update achievement progress
     const { data, error } = await supabase
@@ -114,11 +238,12 @@ export async function POST(request: Request) {
         couple_id: COUPLE_ID,
         achievement_type,
         progress: newProgress,
-        target: achievementDef.target,
-        unlocked: isUnlocked || currentProgress?.unlocked || false,
-        unlocked_at: isUnlocked ? new Date().toISOString() : currentProgress?.unlocked_at,
+        target: maxTarget,
+        unlocked: isFullyUnlocked,
+        unlocked_at: newlyUnlockedLevels.length > 0 ? new Date().toISOString() : currentProgress?.unlocked_at,
+        metadata: { unlocked_levels: allUnlockedLevels },
         updated_at: new Date().toISOString(),
-      })
+      } as any)
       .select()
       .single()
     
@@ -127,23 +252,28 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
     
-    // If unlocked, award bonus water
-    if (isUnlocked) {
+    // Award water for newly unlocked levels
+    if (totalReward > 0) {
       await supabase.from("love_points").update({
-        water: supabase.raw(`water + ${achievementDef.points_reward}`),
+        water: supabase.raw(`water + ${totalReward}`),
       }).eq("couple_id", COUPLE_ID)
       
       // Log the points
       await supabase.from("activity_log").insert({
         couple_id: COUPLE_ID,
         activity_type: "achievement_unlock",
-        points_awarded: achievementDef.points_reward,
-        description: `Unlocked achievement: ${achievementDef.name}`,
-        metadata: { achievement_type },
+        points_awarded: totalReward,
+        description: `Mở khóa ${newlyUnlockedLevels.length} giai đoạn thành tích: ${achievementDef.name}`,
+        metadata: { achievement_type, unlocked_levels: newlyUnlockedLevels },
       })
     }
     
-    return NextResponse.json({ data, unlocked: isUnlocked })
+    return NextResponse.json({ 
+      data, 
+      unlockedLevels: newlyUnlockedLevels,
+      totalReward,
+      progress: newProgress
+    })
   } catch (err) {
     console.error("Error in POST /api/gamification/achievements:", err)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

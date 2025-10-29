@@ -14,12 +14,14 @@ export default function VersionBadge({ version }: VersionBadgeProps) {
     {
       version: `${version} (Current)`,
       items: [
-        "Thêm component Event Countdown cho sự kiện sắp tới",
-        "Hiển thị đếm ngược với progress bar đẹp mắt",
-        "Tự động sắp xếp và lọc sự kiện gần nhất",
-        "Hiển thị số ngày còn lại và ngày diễn ra",
-        "Pin sự kiện quan trọng lên đầu",
-        "Animation mượt mà khi hiển thị"
+        "✨ Hệ thống thành tích nhiều giai đoạn với thưởng tăng dần",
+        "🎨 UI thành tích hoàn toàn mới - hiện đại và đẹp mắt",
+        "📊 Progress bar tổng hợp cho tất cả giai đoạn trong 1 thanh",
+        "🎯 Chỉ hiển thị giai đoạn đã hoàn thành và giai đoạn tiếp theo",
+        "💧 Thưởng nước được điều chỉnh hợp lý và tăng dần theo giai đoạn",
+        "🏆 Mỗi thành tích có 4 giai đoạn với mục tiêu và phần thưởng riêng",
+        "✅ Tự động track và unlock từng giai đoạn",
+        "🎉 Animation và hiệu ứng mượt mà khi unlock"
       ]
     },
     {

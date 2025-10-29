@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { ArrowLeft, ShoppingCart } from "lucide-react"
+import { ArrowLeft, ShoppingCart, History, Info } from "lucide-react"
 import Link from "next/link"
 import LovePointsDisplay from "@/components/love-points-display"
 import LoveTree from "@/components/love-tree"
@@ -10,6 +10,8 @@ import FloatingHearts from "@/components/floating-hearts"
 import FlowerShop from "@/components/flower-shop"
 import MyFlowers from "@/components/my-flowers"
 import FlowerProgress from "@/components/flower-progress"
+import WaterHistoryModal from "@/components/water-history-modal"
+import WaterEarnInfoModal from "@/components/water-earn-info-modal"
 
 export default function GamificationPage() {
   const [totalPoints, setTotalPoints] = useState(0)
@@ -23,6 +25,8 @@ export default function GamificationPage() {
   const [claimedStages, setClaimedStages] = useState<string[]>([])
   const [showClaimPopup, setShowClaimPopup] = useState(false)
   const [flowerWaterMap, setFlowerWaterMap] = useState<{ [key: string]: number }>({})
+  const [showWaterHistory, setShowWaterHistory] = useState(false)
+  const [showWaterEarnInfo, setShowWaterEarnInfo] = useState(false)
 
   const handleClaimReward = async (coins: number, stageIndex: number, flowerId?: string) => {
     try {
@@ -40,7 +44,18 @@ export default function GamificationPage() {
         }),
       })
       
-      const data = await response.json()
+      if (!response.ok) {
+        console.error("claimReward: Response not ok", response.status)
+        return
+      }
+      
+      const data = await response.json().catch(err => {
+        console.error("claimReward: JSON parse error", err)
+        return null
+      })
+      
+      if (!data) return
+      
       console.log("Claim reward response:", data)
       
       // Update local state immediately for better UX
@@ -132,7 +147,14 @@ export default function GamificationPage() {
   const fetchPoints = async () => {
     try {
       const res = await fetch("/api/gamification/points", { cache: 'force-cache' })
-      const data = await res.json()
+      if (!res.ok) {
+        console.error("fetchPoints: Response not ok", res.status)
+        return
+      }
+      const data = await res.json().catch(err => {
+        console.error("fetchPoints: JSON parse error", err)
+        return { water: 0, coins: 0, owned_flowers: [], claimed_stages: [] }
+      })
       setTotalPoints(data.water || 0) // Change to water
       setTotalCoins(data.coins || 0)
       setOwnedFlowers(data.owned_flowers || [])
@@ -141,7 +163,14 @@ export default function GamificationPage() {
       // Fetch flower water data
       if (data.owned_flowers && data.owned_flowers.length > 0) {
         const flowerRes = await fetch("/api/gamification/flower-points", { cache: 'force-cache' })
-        const flowerData = await flowerRes.json()
+        if (!flowerRes.ok) {
+          console.error("fetchFlowerPoints: Response not ok", flowerRes.status)
+          return
+        }
+        const flowerData = await flowerRes.json().catch(err => {
+          console.error("fetchFlowerPoints: JSON parse error", err)
+          return []
+        })
         const waterMap: { [key: string]: number } = {}
         flowerData.forEach((item: any) => {
           waterMap[item.flower_id] = item.points || 0
@@ -177,12 +206,15 @@ export default function GamificationPage() {
         }),
       })
       
-      const data = await response.json()
-      
       if (!response.ok) {
-        // If sync fails, throw error to trigger rollback in MyFlowers component
-        throw new Error(data.error || "Sync failed")
+        const errorText = await response.text().catch(() => "Unknown error")
+        throw new Error(errorText || "Sync failed")
       }
+      
+      const data = await response.json().catch(err => {
+        console.error("waterFlower: JSON parse error", err)
+        throw new Error("Failed to parse response")
+      })
       
       // Update total water from server response
       if (data.remaining_water !== undefined) {
@@ -193,7 +225,14 @@ export default function GamificationPage() {
       // Sync flower water data from server to ensure accuracy
       try {
         const res = await fetch("/api/gamification/flower-points", { cache: 'force-cache' })
-        const flowerData = await res.json()
+        if (!res.ok) {
+          console.error("syncFlowerData: Response not ok", res.status)
+          return
+        }
+        const flowerData = await res.json().catch(err => {
+          console.error("syncFlowerData: JSON parse error", err)
+          return []
+        })
         const waterMap: { [key: string]: number } = {}
         flowerData.forEach((item: any) => {
           waterMap[item.flower_id] = item.points || 0
@@ -231,12 +270,16 @@ export default function GamificationPage() {
         }),
       })
       
-      const data = await response.json()
-      console.log("Response:", data)
-      
       if (!response.ok) {
-        throw new Error(data.error || "Failed to add water")
+        const errorText = await response.text().catch(() => "Unknown error")
+        throw new Error(errorText || "Failed to add water")
       }
+      
+      const data = await response.json().catch(err => {
+        console.error("addWater: JSON parse error", err)
+        throw new Error("Failed to parse response")
+      })
+      console.log("Response:", data)
       
       // Refresh all components
       setRefreshKey(prev => prev + 1)
@@ -257,11 +300,15 @@ export default function GamificationPage() {
         headers: { "Content-Type": "application/json" },
       })
       
-      const data = await response.json()
-      
       if (!response.ok) {
-        throw new Error(data.error || "Failed to reset")
+        const errorText = await response.text().catch(() => "Unknown error")
+        throw new Error(errorText || "Failed to reset")
       }
+      
+      const data = await response.json().catch(err => {
+        console.error("resetAll: JSON parse error", err)
+        throw new Error("Failed to parse response")
+      })
       
       // Reset all local state
       setOwnedFlowers([])
@@ -361,43 +408,6 @@ export default function GamificationPage() {
             Chăm sóc hoa, kiếm nước, mở khóa thành tích!
           </p>
           
-          {/* Cách kiếm điểm */}
-          <div className="mb-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-2xl p-4 border border-blue-200">
-            <h3 className="text-lg font-bold text-blue-600 mb-3 flex items-center gap-2">
-              💡 Cách kiếm nước
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <div className="bg-white rounded-xl p-3 flex items-center gap-3 shadow-sm">
-                <div className="text-2xl">❤️</div>
-                <div>
-                  <div className="font-semibold text-gray-800">Like nhật ký</div>
-                  <div className="text-sm text-blue-600">+3 nước 💧</div>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl p-3 flex items-center gap-3 shadow-sm">
-                <div className="text-2xl">💬</div>
-                <div>
-                  <div className="font-semibold text-gray-800">Comment</div>
-                  <div className="text-sm text-blue-600">+5 nước 💧</div>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl p-3 flex items-center gap-3 shadow-sm">
-                <div className="text-2xl">📝</div>
-                <div>
-                  <div className="font-semibold text-gray-800">Viết nhật ký</div>
-                  <div className="text-sm text-blue-600">+20 nước 💧</div>
-                </div>
-              </div>
-              <div className="bg-white rounded-xl p-3 flex items-center gap-3 shadow-sm">
-                <div className="text-2xl">📸</div>
-                <div>
-                  <div className="font-semibold text-gray-800">Upload ảnh</div>
-                  <div className="text-sm text-blue-600">+10 nước/ảnh 💧</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
           {/* Test Buttons - TẠM TẮT */}
           {false && (
             <>
@@ -441,6 +451,24 @@ export default function GamificationPage() {
                  {/* Love Points */}
          <div className="mb-6">
            <LovePointsDisplay refreshKey={refreshKey} currentWater={totalPoints} />
+         </div>
+
+         {/* Small Action Buttons */}
+         <div className="mb-6 flex gap-3">
+           <button
+             onClick={() => setShowWaterEarnInfo(true)}
+             className="flex-1 bg-gradient-to-r from-blue-500 to-purple-500 text-white py-2 px-4 rounded-lg shadow-md hover:from-blue-600 hover:to-purple-600 transition-all font-medium flex items-center justify-center gap-2 text-sm"
+           >
+             <Info className="w-4 h-4" />
+             💡 Cách kiếm nước
+           </button>
+           <button
+             onClick={() => setShowWaterHistory(true)}
+             className="flex-1 bg-gradient-to-r from-cyan-500 to-blue-500 text-white py-2 px-4 rounded-lg shadow-md hover:from-cyan-600 hover:to-blue-600 transition-all font-medium flex items-center justify-center gap-2 text-sm"
+           >
+             <History className="w-4 h-4" />
+             📜 Lịch sử
+           </button>
          </div>
 
         {/* My Flowers */}
@@ -627,6 +655,18 @@ export default function GamificationPage() {
         <div className="mb-6" key={`achievements-${refreshKey}`}>
           <AchievementsDisplay />
         </div>
+
+        {/* Water History Modal */}
+        <WaterHistoryModal
+          isOpen={showWaterHistory}
+          onClose={() => setShowWaterHistory(false)}
+        />
+
+        {/* Water Earn Info Modal */}
+        <WaterEarnInfoModal
+          isOpen={showWaterEarnInfo}
+          onClose={() => setShowWaterEarnInfo(false)}
+        />
       </div>
     </main>
   )

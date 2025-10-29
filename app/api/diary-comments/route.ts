@@ -80,6 +80,20 @@ export async function POST(req: Request) {
           description: 'Comment nhật ký +5 nước 💧'
         })
       })
+      
+      // Update comment_king achievement
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/gamification/achievements`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            achievement_type: 'comment_king',
+            progress_increment: 1,
+          })
+        })
+      } catch (err) {
+        console.error('Error updating comment_king achievement:', err)
+      }
     } catch (err) {
       console.error('Error awarding water for comment:', err)
     }

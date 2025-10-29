@@ -37,7 +37,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     if (!username) return
     try {
       const res = await fetch(`/api/notifications?user=${encodeURIComponent(username)}`)
-      const data = await res.json()
+      if (!res.ok) {
+        console.error("fetchNotifications: Response not ok", res.status)
+        return
+      }
+      const data = await res.json().catch(err => {
+        console.error("fetchNotifications: JSON parse error", err)
+        return { notifications: [] }
+      })
       const list = Array.isArray(data.notifications) ? data.notifications : []
 
       console.log("Fetched notifications:", list.length)
@@ -118,7 +125,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         }),
       })
       
-      const result = await response.json()
+      if (!response.ok) {
+        console.error("[addNotification] Response not ok", response.status)
+        return
+      }
+      
+      const result = await response.json().catch(err => {
+        console.error("[addNotification] JSON parse error", err)
+        return null
+      })
       console.log("[addNotification] API response:", result)
       // Không refetch ngay, để interval tự fetch
     } catch (err) {

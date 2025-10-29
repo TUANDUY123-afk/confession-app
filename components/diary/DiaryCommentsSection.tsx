@@ -127,7 +127,15 @@ export default function DiaryCommentsSection({
   const formatDate = (dateString: string) => {
     try {
       const date = new Date(dateString)
-      return date.toLocaleString("vi-VN")
+      // Format in Vietnam timezone (UTC+7)
+      return date.toLocaleString("vi-VN", {
+        timeZone: "Asia/Ho_Chi_Minh",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      })
     } catch {
       return "Ngày không xác định"
     }

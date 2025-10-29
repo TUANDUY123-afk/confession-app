@@ -25,14 +25,14 @@ export async function POST(request: Request) {
           content: entry.content,
           date: entry.date ? new Date(entry.date).toISOString() : new Date().toISOString(),
           mood: entry.mood || null,
-        },
+        } as any,
         { onConflict: "id" },
       )
       
       // Award water points only for new entries (not comments)
       if (isNewEntry && !entry.id.startsWith('comment-')) {
         try {
-          await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/gamification/points`, {
+          const pointsRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/gamification/points`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -41,6 +41,25 @@ export async function POST(request: Request) {
               description: 'Viết nhật ký +20 nước 💧'
             })
           })
+          
+          if (pointsRes.ok) {
+            const pointsData = await pointsRes.json()
+            // Check if streak >= 3 for daily_diary achievement
+            if (pointsData.current_streak >= 3) {
+              try {
+                await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/gamification/achievements`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    achievement_type: 'daily_diary',
+                    progress_increment: 0, // Don't increment, just check if streak >= 3
+                  })
+                })
+              } catch (err) {
+                console.error('Error updating daily_diary achievement:', err)
+              }
+            }
+          }
         } catch (err) {
           console.error('Error awarding water for diary entry:', err)
         }

@@ -68,29 +68,49 @@ export async function POST(request: Request) {
     const today = new Date().toISOString().split('T')[0]
     let newStreak = 1
     let longestStreak = 0
+    let oldStreak = 0
+    let streakIncreased = false
+    let isFirstActivityToday = false
     
     if (currentPoints) {
       const points = currentPoints as any
-      // Check if last activity was yesterday (maintain streak)
-      const lastActivity = new Date(points.last_activity_date)
-      const yesterday = new Date()
-      yesterday.setDate(yesterday.getDate() - 1)
+      oldStreak = points.current_streak || 0
       
+      // Kiểm tra nếu đã có hoạt động hôm nay - KHÔNG cộng streak bonus nữa
       if (points.last_activity_date === today) {
-        // Already logged today, don't increase streak
+        // Đã có hoạt động hôm nay rồi, chỉ giữ nguyên streak, KHÔNG cộng bonus
         newStreak = points.current_streak
         longestStreak = points.longest_streak
-      } else if (lastActivity.toDateString() === yesterday.toDateString()) {
-        // Last activity was yesterday, continue streak
-        newStreak = points.current_streak + 1
-        longestStreak = Math.max(newStreak, points.longest_streak)
-      } else if (lastActivity.toDateString() === new Date(today).toDateString()) {
-        // Already logged today
-        newStreak = points.current_streak
-        longestStreak = points.longest_streak
+        streakIncreased = false
+        isFirstActivityToday = false
+      } else {
+        // Đây là hoạt động đầu tiên trong ngày
+        isFirstActivityToday = true
+        const lastActivity = new Date(points.last_activity_date)
+        const yesterday = new Date()
+        yesterday.setDate(yesterday.getDate() - 1)
+        yesterday.setHours(0, 0, 0, 0)
+        
+        if (lastActivity.toDateString() === yesterday.toDateString()) {
+          // Hoạt động cuối là hôm qua, tiếp tục streak
+          newStreak = points.current_streak + 1
+          longestStreak = Math.max(newStreak, points.longest_streak)
+          streakIncreased = true
+        } else {
+          // Streak bị đứt (cách > 1 ngày), reset về 1
+          newStreak = 1
+          longestStreak = Math.max(1, points.longest_streak)
+          streakIncreased = true // Ngày đầu streak mới vẫn được bonus
+        }
       }
-      // else: streak broken, reset to 1
+    } else {
+      // Người dùng mới, lần đầu tiên
+      isFirstActivityToday = true
+      streakIncreased = true
     }
+    
+    // Tính streak bonus: chỉ cộng 1 lần mỗi ngày (khi là hoạt động đầu tiên trong ngày)
+    const streakWaterBonus = (isFirstActivityToday && streakIncreased) ? newStreak * 10 : 0
     
     // Handle arrays
     let ownedFlowers = (currentPoints as any)?.owned_flowers || []
@@ -122,12 +142,22 @@ export async function POST(request: Request) {
         claimed_stages: claimedStages,
       }
       
-      // Update water if provided
+      // Update water: add activity points + streak bonus
+      const currentWater = (currentPoints as any).water || 0
+      let totalWaterToAdd = 0
+      
+      // Add activity points if provided
       if (points !== undefined) {
-        updateData.water = ((currentPoints as any).water || 0) + points
-      } else {
-        updateData.water = (currentPoints as any).water || 0
+        totalWaterToAdd += points
       }
+      
+      // Add streak bonus if streak increased
+      if (streakWaterBonus > 0) {
+        totalWaterToAdd += streakWaterBonus
+        console.log(`🔥 Streak bonus: ${newStreak} ngày = +${streakWaterBonus} nước`)
+      }
+      
+      updateData.water = currentWater + totalWaterToAdd
       
       // Update coins if provided
       if (coins !== undefined) {
@@ -164,11 +194,16 @@ export async function POST(request: Request) {
         claimed_stages: claimedStages,
       }
       
+      // Calculate total water for new user: activity points + streak bonus
+      let totalWater = 0
       if (points !== undefined) {
-        insertData.water = points
-      } else {
-        insertData.water = 0
+        totalWater += points
       }
+      if (streakWaterBonus > 0) {
+        totalWater += streakWaterBonus
+        console.log(`🔥 Streak bonus (new user): ${newStreak} ngày = +${streakWaterBonus} nước`)
+      }
+      insertData.water = totalWater
       
       if (coins !== undefined) {
         insertData.coins = coins
@@ -200,6 +235,16 @@ export async function POST(request: Request) {
       points_awarded: points,
       description,
     } as any)
+    
+    // Log streak bonus separately if awarded
+    if (streakWaterBonus > 0) {
+      await supabase.from("activity_log").insert({
+        couple_id: COUPLE_ID,
+        activity_type: 'streak_bonus',
+        points_awarded: streakWaterBonus,
+        description: `🔥 Streak ${newStreak} ngày: +${streakWaterBonus} nước`,
+      } as any)
+    }
     
     // Handle new flower purchase: reset points to 0
     if (owned_flower !== undefined) {

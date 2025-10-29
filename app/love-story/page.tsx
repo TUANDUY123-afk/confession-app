@@ -59,10 +59,19 @@ export default function LoveStoryPage() {
   const fetchEvents = async () => {
     try {
       const res = await fetch("/api/love-events", { cache: 'force-cache' })
-      const { data } = await res.json()
-      setEvents(data || [])
+      if (!res.ok) {
+        console.error("fetchEvents: Response not ok", res.status)
+        setEvents([])
+        return
+      }
+      const result = await res.json().catch(err => {
+        console.error("fetchEvents: JSON parse error", err)
+        return { data: [] }
+      })
+      setEvents(result.data || [])
     } catch (error) {
       console.error("Error fetching events:", error)
+      setEvents([])
     }
   }
 

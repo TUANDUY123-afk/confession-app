@@ -57,7 +57,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
+    // Get previous like count to determine if this is a new like
+    const previousCount = await getLikes(photoUrl)
+    const isNewLike = likeCount > previousCount
+
     await saveLikes(photoUrl, likeCount)
+
+    // Award water points if this is a new like (count increased)
+    if (isNewLike && likeCount > 0) {
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/gamification/points`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            activity_type: 'like_photo',
+            points: 3,
+            description: 'Like ảnh +3 nước 💧'
+          })
+        })
+      } catch (err) {
+        console.error('Error awarding water for photo like:', err)
+      }
+    }
 
     return NextResponse.json({ likes: likeCount })
   } catch (error) {

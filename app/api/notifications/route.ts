@@ -15,26 +15,47 @@ export async function GET(req: Request) {
     const url = new URL(req.url)
     const user = url.searchParams.get("user")
     
-    let query = supabase.from("notifications").select("*")
+    let data: any[] = []
+    let error: any = null
     
     // Filter notifications cho user hiện tại
     // Chỉ show notifications có target = user hoặc không có target (global)
     if (user) {
-      query = query.or(`target.eq.${user},target.is.null`)
-      console.log("[GET] Fetching notifications for user:", user)
+      // Dùng cách đơn giản: fetch tất cả rồi filter ở ứng dụng
+      // Tránh lỗi syntax với .or()
+      const { data: allData, error: queryError } = await supabase
+        .from("notifications")
+        .select("*")
+        .order("timestamp", { ascending: false })
+      
+      if (queryError) {
+        console.error("[v0] Error querying notifications:", queryError)
+        error = queryError
+      } else {
+        // Filter manually: target = user HOẶC target IS NULL
+        data = (allData || []).filter(
+          (n: any) => !n.target || n.target === user
+        )
+      }
+    } else {
+      // Không có user filter, lấy tất cả
+      const result = await supabase
+        .from("notifications")
+        .select("*")
+        .order("timestamp", { ascending: false })
+      
+      data = result.data || []
+      error = result.error
     }
-    
-    const { data, error } = await query.order("timestamp", { ascending: false })
 
-    if (error) throw error
-    
-    // Log để debug
-    if (data && data.length > 0) {
-      console.log("[GET] Fetched", data.length, "notifications for user:", user)
+    if (error) {
+      console.error("[v0] Error querying notifications:", error)
+      throw error
     }
     
     return NextResponse.json({ notifications: data || [] })
-  } catch {
+  } catch (error) {
+    console.error("[v0] Error getting notifications:", error)
     return NextResponse.json({ error: "Không thể tải danh sách thông báo." }, { status: 500 })
   }
 }
@@ -45,7 +66,7 @@ export async function POST(req: Request) {
     const supabase = getSupabase()
     const { type, message, author, target, link } = await req.json()
 
-    console.log("Creating notification with:", { type, message, author, target, link })
+    console.log("[v0] Creating notification:", { type, message, author, target, link })
 
     // Nếu target là "Tất cả" hoặc không có target, gửi cho tất cả user
     if (!target || target === "Tất cả" || target === "Của chúng ta") {
@@ -65,16 +86,16 @@ export async function POST(req: Request) {
           timestamp: new Date().toISOString(),
         }))
         
-        console.log("[API] Inserting notifications:", notifications.length)
+        console.log("[v0] Inserting notifications:", notifications.length)
         
         const { data, error } = await supabase.from("notifications").insert(notifications).select()
         
         if (error) {
-          console.error("Supabase insert error:", error)
+          console.error("[v0] Supabase insert error:", error)
           throw error
         }
         
-        console.log("[API] Inserted notifications:", data?.length)
+        console.log("[v0] Inserted notifications:", data?.length)
         return NextResponse.json({ success: true, sentTo: usernames.length })
       }
     }
@@ -93,12 +114,12 @@ export async function POST(req: Request) {
     ])
 
     if (error) {
-      console.error("Supabase insert error:", error)
+      console.error("[v0] Supabase insert error:", error)
       throw error
     }
     return NextResponse.json({ success: true })
   } catch (err) {
-    console.error("POST notification error:", err)
+    console.error("[v0] POST notification error:", err)
     return NextResponse.json({ error: "Không thể tạo thông báo mới." }, { status: 500 })
   }
 }

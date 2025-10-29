@@ -144,6 +144,61 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Failed to update water" }, { status: 500 })
     }
     
+    // Log water deduction to activity_log
+    const flowerNames: { [key: string]: string } = {
+      rose: "Hoa Hồng",
+      tulip: "Hoa Tulip",
+      sunflower: "Hoa Hướng Dương",
+      jasmine: "Hoa Nhài",
+      lavender: "Hoa Oải Hương",
+      cherry: "Hoa Anh Đào",
+    }
+    const flowerName = flowerNames[flower_id] || flower_id
+    
+    await supabase.from("activity_log").insert({
+      couple_id: COUPLE_ID,
+      activity_type: "water_flower",
+      points_awarded: -water_to_add, // Negative to indicate deduction
+      description: `Tưới hoa ${flowerName}: -${water_to_add} nước 💧`,
+      metadata: { flower_id, water_amount: water_to_add },
+    } as any)
+    
+    // Check if flower reached stage 3 (Nở Rộ) for achievement
+    // Get flower price to determine thresholds
+    const flowerPrices: { [key: string]: number } = {
+      rose: 100,
+      tulip: 120,
+      sunflower: 150,
+      jasmine: 160,
+      lavender: 180,
+      cherry: 200,
+    }
+    const flowerPrice = flowerPrices[flower_id] || 100
+    
+    // Determine thresholds based on price
+    let stage3Threshold = 500
+    if (flowerPrice >= 200) {
+      stage3Threshold = 1000
+    } else if (flowerPrice >= 150) {
+      stage3Threshold = 800
+    }
+    
+    // Check if flower reached stage 3 and update achievement
+    if (newFlowerWater >= stage3Threshold) {
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/gamification/achievements`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            achievement_type: 'love_garden_bloom',
+            progress_increment: 1,
+          })
+        })
+      } catch (err) {
+        console.error('Error updating love_garden_bloom achievement:', err)
+      }
+    }
+    
     return NextResponse.json({ 
       success: true,
       flower_water: newFlowerWater,

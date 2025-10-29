@@ -33,7 +33,15 @@ export default function PhotoWall() {
         cache: 'no-store',
         next: { revalidate: 0 }
       })
-      const data = await response.json()
+      if (!response.ok) {
+        console.error("loadPhotos: Response not ok", response.status)
+        setPhotos([])
+        return
+      }
+      const data = await response.json().catch(err => {
+        console.error("loadPhotos: JSON parse error", err)
+        return { photos: [] }
+      })
 
       const formatted = (data.photos || []).map((p: any) => ({
         url: p.url,
