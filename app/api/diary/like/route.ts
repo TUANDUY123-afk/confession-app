@@ -143,12 +143,15 @@ export async function POST(request: NextRequest) {
         // Update like_master achievement (only for diary entries, not comments)
         if (!isComment) {
           try {
-            await updateAchievement({
+            console.log('[Like API] Updating like_master achievement for entry:', entryId)
+            const result = await updateAchievement({
               achievement_type: 'like_master',
               progress_increment: 1,
             })
+            console.log('[Like API] Achievement update result:', result)
           } catch (err) {
-            console.error('Error updating like_master achievement:', err)
+            console.error('[Like API] Error updating like_master achievement:', err)
+            // Don't throw - just log the error so it doesn't break the like flow
           }
         }
       } catch (err) {

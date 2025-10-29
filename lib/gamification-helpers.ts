@@ -161,27 +161,36 @@ export async function updateAchievement(data: {
   try {
     const supabase = getSupabaseClient()
     
+    console.log(`[updateAchievement] Updating achievement: ${data.achievement_type}, increment: ${data.progress_increment}`)
+    
     // Import achievements definitions - need to use dynamic import for route files
     const achievementsModule = await import("@/app/api/gamification/achievements/route")
     const ACHIEVEMENTS = achievementsModule.ACHIEVEMENTS
     
     const achievementDef = ACHIEVEMENTS.find(a => a.type === data.achievement_type)
     if (!achievementDef) {
-      throw new Error("Invalid achievement type")
+      throw new Error(`Invalid achievement type: ${data.achievement_type}`)
     }
     
     // Get current progress
-    const { data: currentProgress } = await supabase
+    const { data: currentProgress, error: fetchError } = await supabase
       .from("achievements")
       .select("*")
       .eq("couple_id", COUPLE_ID)
       .eq("achievement_type", data.achievement_type)
       .maybeSingle()
     
+    if (fetchError) {
+      console.error(`[updateAchievement] Error fetching current progress:`, fetchError)
+    }
+    
     const unlockedLevels = (currentProgress?.metadata as any)?.unlocked_levels || []
+    const currentProgressValue = currentProgress?.progress || 0
+    
+    console.log(`[updateAchievement] Current progress: ${currentProgressValue}, Unlocked levels:`, unlockedLevels)
     
     // Special handling for daily_diary and love_garden_bloom
-    let newProgress = (currentProgress?.progress || 0)
+    let newProgress = currentProgressValue
     
     if (data.achievement_type === "daily_diary") {
       const { data: pointsData } = await supabase
@@ -192,6 +201,7 @@ export async function updateAchievement(data: {
       
       const currentStreak = pointsData?.current_streak || 0
       newProgress = currentStreak
+      console.log(`[updateAchievement] daily_diary - Using streak: ${currentStreak}`)
     } else if (data.achievement_type === "love_garden_bloom") {
       const { data: allFlowers } = await supabase
         .from("flower_points")
@@ -225,8 +235,11 @@ export async function updateAchievement(data: {
       }
       
       newProgress = flowersAtStage3
+      console.log(`[updateAchievement] love_garden_bloom - Flowers at stage 3: ${flowersAtStage3}`)
     } else {
-      newProgress = (currentProgress?.progress || 0) + (data.progress_increment || 1)
+      const increment = data.progress_increment || 1
+      newProgress = currentProgressValue + increment
+      console.log(`[updateAchievement] ${data.achievement_type} - Progress: ${currentProgressValue} + ${increment} = ${newProgress}`)
     }
     
     // Check which levels should be unlocked
@@ -244,19 +257,75 @@ export async function updateAchievement(data: {
     const maxTarget = Math.max(...achievementDef.levels.map(l => l.target))
     const isFullyUnlocked = newProgress >= maxTarget
     
-    // Update achievement progress
-    await supabase
+    console.log(`[updateAchievement] New progress: ${newProgress}, Newly unlocked:`, newlyUnlockedLevels, `Total reward: ${totalReward}`)
+    
+    // Update achievement progress - use insert with onConflict for composite unique key
+    const upsertData = {
+      couple_id: COUPLE_ID,
+      achievement_type: data.achievement_type,
+      progress: newProgress,
+      target: maxTarget,
+      unlocked: isFullyUnlocked,
+      unlocked_at: newlyUnlockedLevels.length > 0 ? new Date().toISOString() : (currentProgress?.unlocked_at || null),
+      metadata: { unlocked_levels: allUnlockedLevels },
+      updated_at: new Date().toISOString(),
+    }
+    
+    // Try upsert - Supabase needs the unique constraint columns specified
+    const { error: upsertError } = await supabase
       .from("achievements")
-      .upsert({
-        couple_id: COUPLE_ID,
-        achievement_type: data.achievement_type,
-        progress: newProgress,
-        target: maxTarget,
-        unlocked: isFullyUnlocked,
-        unlocked_at: newlyUnlockedLevels.length > 0 ? new Date().toISOString() : currentProgress?.unlocked_at,
-        metadata: { unlocked_levels: allUnlockedLevels },
-        updated_at: new Date().toISOString(),
-      } as any)
+      .upsert(upsertData as any, {
+        onConflict: "couple_id,achievement_type"
+      })
+    
+    if (upsertError) {
+      console.error(`[updateAchievement] Error upserting achievement:`, upsertError)
+      // Fallback: try update first, then insert if not exists
+      const { data: existing, error: checkError } = await supabase
+        .from("achievements")
+        .select("id")
+        .eq("couple_id", COUPLE_ID)
+        .eq("achievement_type", data.achievement_type)
+        .maybeSingle()
+      
+      if (checkError) {
+        console.error(`[updateAchievement] Error checking existing:`, checkError)
+        throw upsertError
+      }
+      
+      if (existing) {
+        // Update existing
+        const { error: updateError } = await supabase
+          .from("achievements")
+          .update({
+            progress: newProgress,
+            target: maxTarget,
+            unlocked: isFullyUnlocked,
+            unlocked_at: newlyUnlockedLevels.length > 0 ? new Date().toISOString() : (currentProgress?.unlocked_at || null),
+            metadata: { unlocked_levels: allUnlockedLevels },
+            updated_at: new Date().toISOString(),
+          } as any)
+          .eq("couple_id", COUPLE_ID)
+          .eq("achievement_type", data.achievement_type)
+        
+        if (updateError) {
+          console.error(`[updateAchievement] Error updating existing:`, updateError)
+          throw updateError
+        }
+      } else {
+        // Insert new
+        const { error: insertError } = await supabase
+          .from("achievements")
+          .insert(upsertData as any)
+        
+        if (insertError) {
+          console.error(`[updateAchievement] Error inserting new:`, insertError)
+          throw insertError
+        }
+      }
+    }
+    
+    console.log(`[updateAchievement] Successfully updated achievement: ${data.achievement_type}`)
     
     // Award water for newly unlocked levels
     if (totalReward > 0) {
