@@ -24,6 +24,38 @@ const colors = [
   { name: "Hồng nhạt", gradient: "from-pink-300 to-rose-400", value: "light-pink" },
 ]
 
+// Helper to get current time in Vietnam timezone as UTC ISO string
+// Strategy: Get what time it is NOW in VN, then create a UTC timestamp that when displayed in VN shows that time
+function getVietnamTimeNow(): string {
+  const now = new Date() // Current UTC time
+  
+  // Get VN time components using Intl API
+  const vnTimeStr = now.toLocaleString("en-US", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false
+  })
+  
+  // Parse: "12/25/2024, 22:14:30"
+  const [datePart, timePart] = vnTimeStr.split(", ")
+  const [month, day, year] = datePart.split("/").map(Number)
+  const [hour, minute, second] = timePart.split(":").map(Number)
+  
+  // Create UTC timestamp for these components
+  // Date.UTC creates timestamp for 22:14 UTC
+  // But we want timestamp for 22:14 VN (which is 15:14 UTC)
+  // So: timestamp(22:14 UTC) - 7h = timestamp(15:14 UTC) = timestamp(22:14 VN)
+  const utcTimestamp = Date.UTC(year, month - 1, day, hour, minute, second)
+  const vnTimestamp = utcTimestamp - (7 * 60 * 60 * 1000) // Subtract 7 hours
+  
+  return new Date(vnTimestamp).toISOString()
+}
+
 export default function NewEntryModal({ onClose, onAdd }) {
   const [content, setContent] = useState("")
   const [mood, setMood] = useState("Tâm trạng của bạn")
@@ -56,23 +88,43 @@ export default function NewEntryModal({ onClose, onAdd }) {
     const newEntry = {
       id: generateUUID(),
       author: currentUserName,
-      date: new Date().toISOString(),
+      date: getVietnamTimeNow(),
       mood: finalMood,
       moodColor: moodColor,
       moodEmoji: emoji,
       content,
     }
 
-    await saveDiaryEntry(newEntry)
+    // OPTIMIZED: Lưu vào localStorage ngay lập tức (optimistic update)
+    if (typeof window !== "undefined") {
+      try {
+        const existingEntries = JSON.parse(localStorage.getItem("sharedDiary") || "[]")
+        existingEntries.unshift(newEntry)
+        localStorage.setItem("sharedDiary", JSON.stringify(existingEntries))
+      } catch (err) {
+        console.error("Error saving to localStorage:", err)
+      }
+    }
+
+    // Hiển thị entry ngay lập tức và đóng modal
     onAdd(newEntry)
     onClose()
     setSaving(false)
 
-    await addNotification({
-      type: "diary",
-      message: `${currentUserName} vừa đăng một bài viết mới 💌`,
-      author: currentUserName,
-    })
+    // Chạy server sync và notification ở background (không chờ response)
+    Promise.all([
+      saveDiaryEntry(newEntry).catch(err => {
+        console.error("[v0] Background sync failed:", err)
+        // Có thể thêm toast notification ở đây nếu muốn thông báo lỗi cho user
+      }),
+      addNotification({
+        type: "diary",
+        message: `${currentUserName} vừa đăng một bài viết mới 💌`,
+        author: currentUserName,
+      }).catch(err => {
+        console.error("[v0] Notification failed:", err)
+      })
+    ])
   }
 
   const selectedColor = colors.find(c => c.value === moodColor)
