@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Trash2 } from "lucide-react"
+import { Trash2, MessageCircle } from "lucide-react"
 import { getCurrentUser } from "@/utils/user"
 
 interface Comment {

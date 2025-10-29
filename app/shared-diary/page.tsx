@@ -223,8 +223,72 @@ export default function SharedDiaryPage() {
         <NewEntryModal
           onClose={() => setShowModal(false)}
           onAdd={async (entry) => {
-            // Refresh to get data from server with latest likes/comments
-            await loadEntries()
+            // OPTIMIZED: Hiển thị entry ngay lập tức (optimistic update)
+            // Thêm entry mới vào đầu danh sách với dữ liệu mặc định
+            const newEntry = {
+              ...entry,
+              id: entry.id,
+              title: entry.title || "",
+              content: entry.content,
+              author: entry.author,
+              date: entry.date,
+              mood: entry.mood,
+              moodColor: entry.moodColor,
+              moodEmoji: entry.moodEmoji,
+              likesCount: 0,
+              commentsCount: 0,
+              hasLiked: false,
+              created_at: entry.date,
+              user_name: entry.author
+            }
+            
+            // Lưu entry ID để tracking
+            const entryId = newEntry.id
+            
+            // Thêm entry vào state ngay lập tức
+            setEntries(prev => {
+              // Kiểm tra xem entry đã tồn tại chưa (tránh duplicate)
+              const exists = prev.some(e => e.id === entryId)
+              if (exists) return prev
+              return [newEntry, ...prev]
+            })
+            
+            // Đợi một chút để server xử lý xong, rồi mới sync từ server
+            // Merge với entry hiện tại thay vì replace hoàn toàn để entry mới không bị mất
+            setTimeout(async () => {
+              try {
+                const res = await fetch(`/api/diary/load?userName=${currentUser || ""}`, { 
+                  cache: 'no-store',
+                  next: { revalidate: 0 }
+                })
+                if (res.ok) {
+                  const serverEntries = await res.json()
+                  setEntries(prev => {
+                    // Tìm entry mới (optimistic) trong state hiện tại
+                    const optimisticEntry = prev.find(e => e.id === entryId)
+                    
+                    // Tạo map từ server entries để lookup nhanh
+                    const serverEntryMap = new Map(serverEntries.map((e: any) => [e.id, e]))
+                    
+                    // Nếu entry đã có trên server → dùng data từ server (đã có likes/comments chính xác)
+                    // Nếu chưa có trên server → giữ entry optimistic
+                    if (serverEntryMap.has(entryId)) {
+                      // Entry đã được lưu trên server, merge toàn bộ danh sách từ server
+                      return serverEntries
+                    } else if (optimisticEntry) {
+                      // Entry chưa có trên server, giữ entry optimistic và merge với server entries
+                      return [optimisticEntry, ...serverEntries]
+                    } else {
+                      // Trường hợp edge case: không tìm thấy trong cả hai, dùng server data
+                      return serverEntries
+                    }
+                  })
+                }
+              } catch (err) {
+                console.error("Background sync error:", err)
+                // Giữ entry optimistic nếu sync lỗi
+              }
+            }, 2000) // Đợi 2 giây để server xử lý xong
           }}
         />
       )}

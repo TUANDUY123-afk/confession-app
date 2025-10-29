@@ -33,58 +33,54 @@ function normalizeDate(dateValue: any): Date | null {
   return null
 }
 
-// Add timestamp formatting with Vietnam timezone
+// Format date to show posting time
 function formatDate(dateValue: any) {
   try {
     if (!dateValue) return ""
     
-    const entryDate = normalizeDate(dateValue)
-    if (!entryDate) {
-      console.warn("Unable to parse date:", dateValue, typeof dateValue)
+    let date: Date
+    
+    // Parse the date value - ensure it's treated as UTC
+    if (typeof dateValue === 'string') {
+      // Ensure UTC parsing - if no timezone, treat as UTC
+      let dateStr = dateValue
+      if (!dateStr.endsWith('Z') && !dateStr.includes('+') && !dateStr.includes('-', 10)) {
+        // If it's an ISO-like string without timezone, append Z
+        if (dateStr.includes('T')) {
+          dateStr = dateStr + 'Z'
+        }
+      }
+      date = new Date(dateStr)
+    } else if (dateValue instanceof Date) {
+      date = dateValue
+    } else if (typeof dateValue === 'number') {
+      date = new Date(dateValue)
+    } else {
+      date = new Date(dateValue)
+    }
+    
+    if (isNaN(date.getTime())) {
+      console.warn("Invalid date:", dateValue)
       return ""
     }
     
-    // Get current time
-    const now = new Date()
-    
-    // Calculate difference in milliseconds
-    // The dates are stored as UTC in database, but we need to calculate 
-    // the difference as if both were in Vietnam timezone
-    // Since Vietnam is UTC+7, we need to adjust for the timezone offset
-    // Trừ tổng cộng 14 giờ để bù chênh lệch múi giờ
-    const timezoneOffset = 14 * 60 * 60 * 1000 // 14 hours in milliseconds
-    
-    // Calculate raw difference (UTC timestamps)
-    const rawDiff = now.getTime() - entryDate.getTime()
-    
-    // Adjust for Vietnam timezone: trừ đi 14 giờ để hiển thị đúng thời gian VN
-    const diff = rawDiff - timezoneOffset
-    
-    // Handle negative diff (entry is in the future, which shouldn't happen but handle gracefully)
-    if (diff < 0 || diff < 1000) {
-      // If date is in future or less than 1 second, show as "vừa xong"
-      return "vừa xong"
-    }
-    
-    const seconds = Math.floor(diff / 1000)
-    const minutes = Math.floor(seconds / 60)
-    const hours = Math.floor(minutes / 60)
-    const days = Math.floor(hours / 24)
-
-    if (seconds < 60) return "vừa xong"
-    if (minutes < 60) return `${minutes} phút trước`
-    if (hours < 24) return `${hours} giờ trước`
-    if (days < 7) return `${days} ngày trước`
-    
-    // Format full date in Vietnam timezone (includes time)
-    return entryDate.toLocaleString("vi-VN", {
+    // Format in Vietnam timezone (UTC+7)
+    // The date object represents UTC time
+    // toLocaleString with timeZone converts it to VN time automatically
+    const result = date.toLocaleString("vi-VN", {
       timeZone: "Asia/Ho_Chi_Minh",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
-      minute: "2-digit"
+      minute: "2-digit",
+      hour12: false
     })
+    
+    // Debug: Uncomment to see what's happening
+    // console.log("Format date:", { original: dateValue, parsed: date.toISOString(), formatted: result })
+    
+    return result
   } catch (error) {
     console.error("Error formatting date:", error, dateValue)
     return ""
